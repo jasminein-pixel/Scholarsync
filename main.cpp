@@ -3,10 +3,10 @@
 using namespace std;
 
 int main() {
-    cout << "========================================" << endl;
+    
     cout << "   ScholarSync - Research Collaboration " << endl;
     cout << "   Platform v0.1                        " << endl;
-    cout << "========================================" << endl;
+   
     cout << endl;
     cout << "Modules to be built:" << endl;
     cout << "  [1] User System       (Student & Professor)" << endl;
