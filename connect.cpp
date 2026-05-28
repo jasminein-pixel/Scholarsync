@@ -40,7 +40,7 @@ int main()
         "SERVER=scholarsync.database.windows.net;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
-        "PWD={compengproj#123};"
+        "PWD={pass};"
         "Encrypt=yes;"
         "TrustServerCertificate=no;"
         "Connection Timeout=30;";
