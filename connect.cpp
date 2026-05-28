@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <sqlext.h>
 #include <iostream>
-
+// 
 // g++ connect.cpp -lodbc32
 // -lobdc = link with library obdc
 // ODBC = open database connection: translates the caller programming language to the language the remote database works on
