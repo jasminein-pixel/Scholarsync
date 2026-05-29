@@ -19,6 +19,7 @@ int main() {
         "UID=scholarsync;"
         "PWD=passwordhere;"
         "Encrypt=yes;"
+        "TrustServerCertificate=yes;"
     );
 
     auto result = nanodbc::execute(conn, "SELECT TOP 5 id, name, email FROM Users");
