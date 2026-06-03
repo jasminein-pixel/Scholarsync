@@ -1,11 +1,10 @@
 #include <windows.h>
 #include <sqlext.h>
-#include <iostream>
-// 
+#include <iostream> 
 // g++ connect.cpp -lodbc32
 // -lobdc = link with library obdc
 // ODBC = open database connection: translates the caller programming language to the language the remote database works on
-//  Download OBDC driver "https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server"
+// Download OBDC driver "https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server"
 
 void extractError(SQLHANDLE handle, SQLSMALLINT type);
 
