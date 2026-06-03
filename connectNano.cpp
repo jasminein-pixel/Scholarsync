@@ -23,8 +23,6 @@ int main()
             "Connection Timeout=30");
 
         std::string query = "SELECT TOP (10) * FROM [dbo].[StudentDetails]";
-
-
         std::cout << std::endl;
         std::cout << "------------STUDENT DETAILS------------\n";
         auto result = nanodbc::execute(conn, query);
