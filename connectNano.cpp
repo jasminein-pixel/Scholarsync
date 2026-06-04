@@ -11,6 +11,7 @@
 
 int main()
 {
+    std::cout << "Program started" << std::endl;
     try
     {
         nanodbc::connection conn(
@@ -22,7 +23,7 @@ int main()
             "Encrypt=yes;"
             "Connection Timeout=30");
 
-        std::string query = "SELECT TOP (10) * FROM [dbo].[StudentDetails]";
+        std::string query = "SELECT TOP (10) SID, Name, Email, Department, Program, Level, Semester, Preference, ContactInfo FROM [dbo].[StudentDetails]";
         std::cout << std::endl;
         std::cout << "------------STUDENT DETAILS------------\n";
         auto result = nanodbc::execute(conn, query);
@@ -31,30 +32,30 @@ int main()
             std::cout << "s.id : " << result.get<int>(0) << "\n"
                       << "Name : " << result.get<std::string>(1) << "\n"
                       << "Email : " << result.get<std::string>(2) << "\n"
-                      << "Password : " << result.get<std::string>(3) << "\n"
-                      << "Department : " << result.get<std::string>(4) << "\n"
-                      << "Program : " << result.get<std::string>(5) << "\n"
-                      << "Level : " << result.get<std::string>(6) << "\n"
-                      << "Semester : " << result.get<int>(7) << "\n"
-                      << "Preference : " << result.get<std::string>(8) << "\n"
-                      << "PhoneNum : " << result.get<std::string>(9) << "\n"
+            
+                      << "Department : " << result.get<std::string>(3) << "\n"
+                      << "Program : " << result.get<std::string>(4) << "\n"
+                      << "Level : " << result.get<std::string>(5) << "\n"
+                      << "Semester : " << result.get<int>(6) << "\n"
+                      << "Preference : " << result.get<std::string>(7) << "\n"
+                      << "PhoneNum : " << result.get<std::string>(8) << "\n"
                       << std::endl;
         }
 
         std::cout << std::endl;
         std::cout << "------------TEACHER DETAILS------------\n";
 
-        query = "SELECT TOP (10) * FROM [dbo].[TeacherDetails]";
+        query = "SELECT TOP (10) TID, Name, Email, Department, Qualification, ContactInfo FROM [dbo].[TeacherDetails]";
         result = nanodbc::execute(conn, query);
         while (result.next())
         {
             std::cout << "t.id : " << result.get<int>(0) << "\n"
                       << "Name : " << result.get<std::string>(1) << "\n"
                       << "Email : " << result.get<std::string>(2) << "\n"
-                      << "Password : " << result.get<std::string>(3) << "\n"
-                      << "Department : " << result.get<std::string>(4) << "\n"
-                      << "Qualification : " << result.get<std::string>(5) << "\n"
-                      << "PhoneNum : " << result.get<std::string>(6) << "\n"
+                      
+                      << "Department : " << result.get<std::string>(3) << "\n"
+                      << "Qualification : " << result.get<std::string>(4) << "\n"
+                      << "PhoneNum : " << result.get<std::string>(5) << "\n"
                       << std::endl;
         }
     }
