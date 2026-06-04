@@ -18,16 +18,19 @@ int main()
             "SERVER=scholarsync.database.windows.net;"
             "DATABASE=ScholarSync;"
             "UID=scholarsync;"
-            "PWD=;"
+            "PWD=compengproj#123;"
             "Encrypt=yes;"
-            "Connection Timeout=30");
+            "Connection Timeout=30;"
+            "MARS_Connection=yes;");
 
         std::string query = "SELECT TOP (10) * FROM [dbo].[StudentDetails]";
         std::cout << std::endl;
         std::cout << "------------STUDENT DETAILS------------\n";
         auto result = nanodbc::execute(conn, query);
+        int id;
         while (result.next())
         {
+            id = result.get<int>(0);
             std::cout << "s.id : " << result.get<int>(0) << "\n"
                       << "Name : " << result.get<std::string>(1) << "\n"
                       << "Email : " << result.get<std::string>(2) << "\n"
@@ -39,6 +42,15 @@ int main()
                       << "Preference : " << result.get<std::string>(8) << "\n"
                       << "PhoneNum : " << result.get<std::string>(9) << "\n"
                       << std::endl;
+
+            query = "SELECT * FROM SkillList WHERE SID =" + std::to_string(id) + ";";
+            auto skillset = nanodbc::execute(conn, query);
+            while (skillset.next())
+            {
+                std::cout << "Skill :" << skillset.get<std::string>(1) << "\t";
+                std::cout << "Proficiency :" << skillset.get<std::string>(2) << "\n";
+            }
+            std::cout << std::endl;
         }
 
         std::cout << std::endl;
