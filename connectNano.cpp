@@ -18,7 +18,7 @@ int main()
             "SERVER=scholarsync.database.windows.net;"
             "DATABASE=ScholarSync;"
             "UID=scholarsync;"
-            "PWD=compengproj#123;"
+            "PWD=;"
             "Encrypt=yes;"
             "Connection Timeout=30;"
             "MARS_Connection=yes;");
@@ -51,6 +51,7 @@ int main()
                 std::cout << "Proficiency :" << skillset.get<std::string>(2) << "\n";
             }
             std::cout << std::endl;
+            std::cout << "--------------------------------------\n";
         }
 
         std::cout << std::endl;
