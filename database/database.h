@@ -11,7 +11,7 @@ private:
         "SERVER=scholarsync.database.windows.net;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
-        "PWD=engineering$123;"
+        "PWD=;"
         "Encrypt=yes;"
         "Connection Timeout=30;"
         "MARS_Connection=yes;"};
