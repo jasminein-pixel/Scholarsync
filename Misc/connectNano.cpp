@@ -19,12 +19,12 @@ int main()
             "SERVER=scholarsync.database.windows.net;"
             "DATABASE=ScholarSync;"
             "UID=scholarsync;"
-            "PWD=;"
+            "PWD=engineering$123;"
             "Encrypt=yes;"
             "Connection Timeout=30;"
             "MARS_Connection=yes;");
 
-        std::string query = "SELECT TOP (10) SID, Name, Email, Department, Program, Level, Semester, Preference, ContactInfo FROM [dbo].[StudentDetails]";
+        std::string query = "SELECT TOP (10)  FROM [dbo].[StudentDetails]";
         std::cout << std::endl;
         std::cout << "------------STUDENT DETAILS------------\n";
         auto result = nanodbc::execute(conn, query);
@@ -35,7 +35,6 @@ int main()
             std::cout << "s.id : " << result.get<int>(0) << "\n"
                       << "Name : " << result.get<std::string>(1) << "\n"
                       << "Email : " << result.get<std::string>(2) << "\n"
-            
                       << "Department : " << result.get<std::string>(3) << "\n"
                       << "Program : " << result.get<std::string>(4) << "\n"
                       << "Level : " << result.get<std::string>(5) << "\n"
@@ -65,7 +64,7 @@ int main()
             std::cout << "t.id : " << result.get<int>(0) << "\n"
                       << "Name : " << result.get<std::string>(1) << "\n"
                       << "Email : " << result.get<std::string>(2) << "\n"
-                      
+
                       << "Department : " << result.get<std::string>(3) << "\n"
                       << "Qualification : " << result.get<std::string>(4) << "\n"
                       << "PhoneNum : " << result.get<std::string>(5) << "\n"

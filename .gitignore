@@ -1,2 +1,6 @@
 nanodbc
 *.exe
+build/
+*.pdb
+*.dll
+.vscode
