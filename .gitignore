@@ -1,0 +1,19 @@
+# Secrets
+config.h
+
+# Qt Creator
+*.user
+*.pro.user
+
+# Build folders
+build/
+debug/
+release/
+
+# Qt generated files
+moc_*
+ui_*
+qrc_*
+
+# MacOS
+.DS_Store
