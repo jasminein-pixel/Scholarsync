@@ -1,0 +1,4 @@
+#ifndef REGISTERWINDOW_H
+#define REGISTERWINDOW_H
+
+#endif // REGISTERWINDOW_H
