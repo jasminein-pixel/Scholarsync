@@ -8,7 +8,7 @@
 class Notification
 {
 public:
-    void createAlert(QString aid, QSqlDatabase db , bool accepted);
-    void creditAlert(QString Credits, QString pid, QString SID, QSqlDatabase db);
-    void extractAlerts(QString sid, QSqlDatabase db);
+    void createAlert(QString aid, QSqlDatabase &db, bool accepted);
+    void creditAlert(QString Credits, QString pid, QString SID, QSqlDatabase &db);
+    void extractAlerts(QString sid, QSqlDatabase &db);
 };

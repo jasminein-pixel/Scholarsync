@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
         "SERVER=scholarsync.database.windows.net;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
-        "PWD=;"
+        "PWD=secretpassword123#;"
         "Encrypt=yes;"
         "TrustServerCertificate=no;"
         "Connection Timeout=30;");
