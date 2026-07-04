@@ -1,5 +1,4 @@
 #pragma once
-#include "fileupload.h"
 #include "application.h"
 #include <QVector>
 
@@ -8,7 +7,6 @@ class ProjApplication
 private:
     QString PID;
 
-    // Cached project fields populated by displayDetails()
     QString ProjectName, ProjectDesc, vacantSpot, expectedDuration,
             department, applicants, CreatedAt;
 

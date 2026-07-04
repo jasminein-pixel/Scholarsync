@@ -1,3 +1,5 @@
+#pragma once
+#include <QString>
 #include <QApplication>
 #include <QFileDialog>
 #include <QSqlDatabase>
@@ -7,8 +9,8 @@
 #include <QFile>
 #include <QDebug>
 #include <QSqlQuery>
-
 #include <QDesktopServices>
+#include "modification.h"
 
 class File
 {
@@ -19,5 +21,4 @@ private:
 
 public:
     bool uploadCV(QString sid, QString name, QSqlDatabase &db);
-    bool downloadCV(QString sid, QString name);
 };

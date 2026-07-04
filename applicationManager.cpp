@@ -21,9 +21,7 @@ void ProjApplication::displayDetails(QSqlDatabase &db)
                   << "| Vacant:" << vacantSpot << "| Duration:" << expectedDuration
                   << "| Dept:" << department << "| Applicants:" << applicants
                   << "| Created:" << CreatedAt;
-
-        // Now load the actual applicant list for this project.
-        displayApplicants(db, vacantSpot);
+         displayApplicants(db, vacantSpot);
     }
     else
     {
@@ -52,15 +50,10 @@ void ProjApplication::displayApplicants(QSqlDatabase &db, QString &vacantSpot)
             message     = query.value("message").toString();
             appliedAt   = query.value("AppliedAt").toString();
 
-            // Argument order here MUST match Application's constructor:
-            // (AID, vacantSpot, PID, SID, status, engineScore, message, appliedAt, db)
-            // vacantSpot/status are copied by value into `temp`, so it's
-            // safe for `temp` to outlive this loop iteration (no dangling
-            // references, unlike the previous QString& version).
-            Application temp(AID, vacantSpot, PID, SID, status, engineScore,
+            Application temp(AID, &vacantSpot, PID, SID, status, engineScore,
                               message, appliedAt, db);
             temp.display();
-            temp.accept(db);
+            temp.getCV();
             applicationList.append(temp);
         }
     }

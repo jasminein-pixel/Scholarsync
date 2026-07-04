@@ -12,7 +12,8 @@ add_executable(ScholarSync main.cpp
     applicationManager.h applicationManager.cpp
     application.h
     application.cpp
-    timeFormat.cpp
+    modification.cpp
+    modification.h
 )
 
 target_link_libraries(ScholarSync PRIVATE

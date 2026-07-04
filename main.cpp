@@ -22,8 +22,12 @@ int main(int argc, char *argv[])
     if (db.open())
     {
         qDebug() << "Azure SQL Connected Successfully";
-        ProjApplication p("1");
+        ProjApplication p("2");
         p.displayDetails(db);
+        // f1.uploadCV("1", "Rahul Shrestha", db);
+        // f1.uploadCV("2", "Jasmine Shrestha", db);
+        // f1.uploadCV("3", "Aayush Timilsina", db);
+
     }
     else
     {

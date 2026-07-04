@@ -25,18 +25,16 @@ void Application::getApplicantDetails(QString SID, QSqlDatabase const &db)
 
 void Application::accept(QSqlDatabase const &db)
 {
-    // vacantSpot/status are owned members now, so this update is safe and
-    // local to this object. Callers can read it back via getVacantSpot().
-    qint16 vac = vacantSpot.toInt();
+    qint16 vac = (*vacantSpot).toInt();
     vac--;
-    vacantSpot = QString::number(vac);
+    (*vacantSpot) = QString::number(vac);
 
     Notification n;
     n.createAlert(AID, db, true);
 
     QSqlQuery query(db);
     query.prepare("UPDATE ProjectDetails SET vacantSpot = :vs WHERE PID = :pid;");
-    query.bindValue(":vs", vacantSpot);
+    query.bindValue(":vs", *vacantSpot);
     query.bindValue(":pid", PID);
     if (!query.exec())
     {
@@ -67,5 +65,17 @@ void Application::reject(QSqlDatabase const &db)
     if (!query.exec())
     {
         qDebug() << "Failed to update application status:" << query.lastError().text();
+    }
+}
+
+void Application::getCV()
+{
+    if(CV!= '0')
+    {
+        QDesktopServices::openUrl(QUrl(CV));
+    }
+    else
+    {
+        qDebug() << "CV UNAVAILABLE GNG";
     }
 }

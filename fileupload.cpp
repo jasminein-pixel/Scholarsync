@@ -13,11 +13,12 @@ bool File::uploadCV(QString sid, QString Name, QSqlDatabase &db)
         qDebug() << "Cannot open file";
         return 1;
     }
+
     QString url = QString("https://%1.blob.core.windows.net/%2/%3-%4.pdf?%5")
                       .arg(ACCOUNT)
                       .arg(CONTAINER)
                       .arg(sid)
-                      .arg(Name)
+                      .arg(spaceRemover(Name))
                       .arg(SAS_TOKEN);
 
     qDebug() << "Uploading to:" << url;
@@ -53,7 +54,12 @@ bool File::uploadCV(QString sid, QString Name, QSqlDatabase &db)
         qApp->quit(); });
 
     url = QString("https://%1.blob.core.windows.net/%2/%3-%4.pdf?%5")
-              .arg(ACCOUNT, CONTAINER, sid, Name, SAS_TOKEN);
+              .arg(ACCOUNT)
+              .arg(CONTAINER)
+              .arg(sid)
+              .arg(spaceRemover(Name))
+              .arg(SAS_TOKEN);
+
 
     QSqlQuery query(db);
     query.prepare("UPDATE StudentDetails SET cv_url = :url WHERE SID = :sid");
@@ -65,12 +71,3 @@ bool File::uploadCV(QString sid, QString Name, QSqlDatabase &db)
     return true;
 }
 
-bool File::downloadCV(QString sid, QString name)
-{
-    QString url = QString("https://%1.blob.core.windows.net/%2/%3-%4.pdf?%5")
-                      .arg(ACCOUNT, CONTAINER, sid, name, SAS_TOKEN);
-
-    qDebug() << url;
-    QDesktopServices::openUrl(QUrl(url));
-    return true;
-}
