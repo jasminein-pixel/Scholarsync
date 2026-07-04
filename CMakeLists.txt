@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -23,11 +23,21 @@ set(PROJECT_SOURCES
     teacher_login.h
     teacher_login.cpp
     teacher_login.ui
+    database/DatabaseManager.h
+    database/DatabaseManager.cpp
+    auth/AuthManager.h
+    auth/AuthManager.cpp
+    models/Student.h
+    models/Student.cpp
+    models/Teacher.h
+    models/Teacher.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})
 
-target_link_libraries(ScholarSync PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(ScholarSync PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Sql)
 
 # If/when you wire up nanodbc + Azure SQL, link it here, e.g.:
 # find_package(nanodbc REQUIRED)
