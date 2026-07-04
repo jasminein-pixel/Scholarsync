@@ -2,7 +2,11 @@
 #include "ui_mainwindow.h"
 #include "student_login.h"
 #include "teacher_login.h"
-
+#include "windows/RegisterWindow.h"
+#include "auth/AuthManager.h"
+#include "database/DatabaseManager.h"
+#include "windows/StudentDashboard.h"
+#include "windows/TeacherDashboard.h"
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -11,8 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // Create the login pages and add them to the stacked widget.
-    // pageRoleSelect (index 0) already lives in mainwindow.ui.
     m_studentLoginPage = new StudentLogin(this);
     m_teacherLoginPage = new TeacherLogin(this);
 
@@ -20,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidget->addWidget(m_teacherLoginPage); // index 2
 
     ui->stackedWidget->setCurrentIndex(PageRoleSelect);
+
+    // Connect to database on startup
+    DatabaseManager::instance().connect();
 
     setupConnections();
 }
@@ -31,24 +36,29 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupConnections()
 {
-    // Role selection -> navigate to respective login page
+    // Role selection
     connect(ui->btnStudentRole, &QPushButton::clicked,
             this, &MainWindow::onStudentRoleSelected);
     connect(ui->btnTeacherRole, &QPushButton::clicked,
             this, &MainWindow::onTeacherRoleSelected);
 
-    // Back buttons on each login page return to role selection
+    // Back buttons
     connect(m_studentLoginPage, &StudentLogin::backRequested,
             this, &MainWindow::onBackToRoleSelect);
     connect(m_teacherLoginPage, &TeacherLogin::backRequested,
             this, &MainWindow::onBackToRoleSelect);
 
-    // Login attempts bubble up to MainWindow, which will eventually
-    // talk to the Azure SQL backend.
+    // Login attempts
     connect(m_studentLoginPage, &StudentLogin::loginAttempted,
             this, &MainWindow::handleStudentLoginAttempt);
     connect(m_teacherLoginPage, &TeacherLogin::loginAttempted,
             this, &MainWindow::handleTeacherLoginAttempt);
+
+    // Register buttons
+    connect(m_studentLoginPage, &StudentLogin::registerRequested,
+            this, &MainWindow::onStudentRegisterRequested);
+    connect(m_teacherLoginPage, &TeacherLogin::registerRequested,
+            this, &MainWindow::onTeacherRegisterRequested);
 }
 
 void MainWindow::onStudentRoleSelected()
@@ -68,26 +78,72 @@ void MainWindow::onBackToRoleSelect()
 
 void MainWindow::handleStudentLoginAttempt(const QString &email, const QString &password)
 {
-    // TODO: Replace with real authentication against Azure SQL via nanodbc.
-    // e.g. query the Students table, hash-compare password, then open the
-    // student dashboard window.
     if (email.isEmpty() || password.isEmpty()) {
-        QMessageBox::warning(this, "Login Failed", "Please enter both email and password.");
+        QMessageBox::warning(this, "Login Failed",
+                             "Please enter both email and password.");
         return;
     }
 
-    QMessageBox::information(this, "Student Login",
-                             QString("Attempting login for: %1\n(Hook this up to your DB layer.)").arg(email));
+    if (AuthManager::loginStudent(email, password)) {
+        // Fetch SID and name for session
+        auto q = DatabaseManager::instance().prepareAndExecute(
+            "SELECT SID, Name FROM StudentDetails WHERE Email = ?",
+            {email}
+        );
+        if (q.next()) {
+            currentSID      = q.value(0).toInt();
+            currentUserName = q.value(1).toString();
+        }
+
+        StudentDashboard *dashboard = new StudentDashboard();
+        dashboard->setAttribute(Qt::WA_DeleteOnClose);
+        dashboard->show();
+        this->close();
+    } else {
+        QMessageBox::warning(this, "Login Failed",
+                             "Incorrect email or password.");
+    }
 }
 
 void MainWindow::handleTeacherLoginAttempt(const QString &email, const QString &password)
 {
-    // TODO: Replace with real authentication against Azure SQL via nanodbc.
     if (email.isEmpty() || password.isEmpty()) {
-        QMessageBox::warning(this, "Login Failed", "Please enter both email and password.");
+        QMessageBox::warning(this, "Login Failed",
+                             "Please enter both email and password.");
         return;
     }
 
-    QMessageBox::information(this, "Teacher Login",
-                             QString("Attempting login for: %1\n(Hook this up to your DB layer.)").arg(email));
+    if (AuthManager::loginTeacher(email, password)) {
+        // Fetch TID and name for session
+        auto q = DatabaseManager::instance().prepareAndExecute(
+            "SELECT TID, Name FROM TeacherDetails WHERE Email = ?",
+            {email}
+        );
+        if (q.next()) {
+            currentTID      = q.value(0).toInt();
+            currentUserName = q.value(1).toString();
+        }
+
+        TeacherDashboard *dashboard = new TeacherDashboard();
+        dashboard->setAttribute(Qt::WA_DeleteOnClose);
+        dashboard->show();
+        this->close();
+    } else {
+        QMessageBox::warning(this, "Login Failed",
+                             "Incorrect email or password.");
+    }
+}
+
+void MainWindow::onStudentRegisterRequested()
+{
+    RegisterWindow *reg = new RegisterWindow();
+    reg->setAttribute(Qt::WA_DeleteOnClose);
+    reg->show();
+}
+
+void MainWindow::onTeacherRegisterRequested()
+{
+    RegisterWindow *reg = new RegisterWindow();
+    reg->setAttribute(Qt::WA_DeleteOnClose);
+    reg->show();
 }

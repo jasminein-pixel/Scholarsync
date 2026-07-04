@@ -52,4 +52,4 @@ public:
                              const QString &password);
 };
 
-#endif
+#endif // AUTHMANAGER_H

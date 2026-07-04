@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(ScholarSync VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -9,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
 
 set(PROJECT_SOURCES
@@ -31,6 +30,12 @@ set(PROJECT_SOURCES
     models/Student.cpp
     models/Teacher.h
     models/Teacher.cpp
+    windows/RegisterWindow.h
+    windows/RegisterWindow.cpp
+    windows/StudentDashboard.h
+    windows/StudentDashboard.cpp
+    windows/TeacherDashboard.h
+    windows/TeacherDashboard.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})
@@ -38,7 +43,3 @@ add_executable(ScholarSync ${PROJECT_SOURCES})
 target_link_libraries(ScholarSync PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql)
-
-# If/when you wire up nanodbc + Azure SQL, link it here, e.g.:
-# find_package(nanodbc REQUIRED)
-# target_link_libraries(ScholarSync PRIVATE nanodbc::nanodbc)
