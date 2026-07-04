@@ -1,17 +1,12 @@
 
 #include <QSqlDatabase>
-#include "fileupload.h"
-#include "notification.h"
 #include <QSqlError>
+#include "applicationManager.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QString name = "Rahul";
     File f1;
-    // f1.uploadCV("1" , name);
-    // // f1.downloadCV("1" , name);
-    // qDebug() << QSqlDatabase::drivers();
     QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
 
     db.setDatabaseName(
@@ -19,7 +14,7 @@ int main(int argc, char *argv[])
         "SERVER=scholarsync.database.windows.net;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
-        "PWD=secretpassword123#;"
+        "PWD=;"
         "Encrypt=yes;"
         "TrustServerCertificate=no;"
         "Connection Timeout=30;");
@@ -27,12 +22,8 @@ int main(int argc, char *argv[])
     if (db.open())
     {
         qDebug() << "Azure SQL Connected Successfully";
-        // f1.uploadCV("1" , name, db);
-
-        Notification n1;
-        n1.creditAlert("10", "1", "1", db);
-        // n1.createAlert("1", db , 0);
-        // n1.extractAlerts("1", db);
+        ProjApplication p("1");
+        p.displayDetails(db);
     }
     else
     {

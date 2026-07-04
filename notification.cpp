@@ -1,10 +1,12 @@
 #include "notification.h"
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 
-void Notification::createAlert(QString aid, QSqlDatabase &db, bool accepted)
+void Notification::createAlert(QString aid, QSqlDatabase const &db, bool accepted)
 {
     QString pid, sid, tid, projectName, teacherName;
     QSqlQuery query(db);
-
     query.prepare("SELECT PID, SID FROM Applications WHERE AID = :aid");
     query.bindValue(":aid", aid);
     if (query.exec() && query.next())
@@ -58,20 +60,14 @@ void Notification::createAlert(QString aid, QSqlDatabase &db, bool accepted)
     query.prepare("INSERT INTO StudentInbox (SID, Info) VALUES (:sid, :message)");
     query.bindValue(":sid", sid);
     query.bindValue(":message", message);
-
     if (!query.exec())
     {
-        qDebug() << "failed:" << query.lastError().text();
-    }
-    else
-    {
-        qDebug() << "successful!";
+        qDebug() << "Failed to insert alert:" << query.lastError().text();
     }
 }
 
 void Notification::creditAlert(QString Credits, QString pid, QString SID, QSqlDatabase &db)
 {
-    qDebug() << "creditAlert called";
     QSqlQuery query(db);
     QString teacherName, projectName, tid;
 
@@ -100,45 +96,34 @@ void Notification::creditAlert(QString Credits, QString pid, QString SID, QSqlDa
         return;
     }
 
-    QString message;
-    message = "Congrats!! You Have Received %1 Credits From %2 On completion of the Project %3";
+    QString message = "Congrats!! You Have Received %1 Credits From %2 On completion of the Project %3";
     message = message.arg(Credits, teacherName, projectName);
 
     query.prepare("INSERT INTO StudentInbox (SID, Info) VALUES (:sid, :message)");
     query.bindValue(":sid", SID);
     query.bindValue(":message", message);
-
     if (!query.exec())
     {
-        qDebug() << "error shi";
+        qDebug() << "Failed to insert credit alert:" << query.lastError().text();
     }
 }
 
 void Notification::extractAlerts(QString sid, QSqlDatabase &db)
 {
     QSqlQuery query(db);
-
-    query.prepare(
-        "SELECT Info, ReceivedAt "
-        "FROM StudentInbox "
-        "WHERE SID = :sid");
-
+    query.prepare("SELECT Info, ReceivedAt FROM StudentInbox WHERE SID = :sid");
     query.bindValue(":sid", sid);
-
     if (query.exec())
     {
         while (query.next())
         {
-            QString message =
-                query.value("Info").toString();
-            QString ReceivedAt =
-                query.value("ReceivedAt").toString();
-
-            qDebug()
-                << "Received At:"
-                << ReceivedAt
-                << "| message:"
-                << message;
+            QString message    = query.value("Info").toString();
+            QString ReceivedAt = query.value("ReceivedAt").toString();
+            qDebug() << "Received At:" << ReceivedAt << "| message:" << message;
         }
+    }
+    else
+    {
+        qDebug() << "Failed to fetch alerts:" << query.lastError().text();
     }
 }

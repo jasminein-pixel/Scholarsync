@@ -9,6 +9,10 @@ add_executable(ScholarSync main.cpp
     fileupload.h
     notification.h
     notification.cpp
+    applicationManager.h applicationManager.cpp
+    application.h
+    application.cpp
+    timeFormat.cpp
 )
 
 target_link_libraries(ScholarSync PRIVATE
