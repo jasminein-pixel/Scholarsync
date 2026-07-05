@@ -51,7 +51,7 @@ bool File::uploadCV(QString sid, QString Name, QSqlDatabase &db)
             qDebug() << "FAILED";
 
         reply->deleteLater();
-        qApp->quit(); });
+         });
 
     url = QString("https://%1.blob.core.windows.net/%2/%3-%4.pdf?%5")
               .arg(ACCOUNT)
