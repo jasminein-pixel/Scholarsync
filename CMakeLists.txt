@@ -8,8 +8,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Network)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -36,10 +36,21 @@ set(PROJECT_SOURCES
     windows/StudentDashboard.cpp
     windows/TeacherDashboard.h
     windows/TeacherDashboard.cpp
+    application.h
+    application.cpp
+    applicationManager.h
+    applicationManager.cpp
+    modification.h
+    modification.cpp
+    notification.h
+    notification.cpp
+    fileupload.h
+    fileupload.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})
 
 target_link_libraries(ScholarSync PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Sql)
+    Qt${QT_VERSION_MAJOR}::Sql
+    Qt${QT_VERSION_MAJOR}::Network)
