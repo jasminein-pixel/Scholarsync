@@ -20,7 +20,7 @@ void ProjApplication::displayDetails(QSqlDatabase &db)
         qDebug() << "Project:" << ProjectName << "| Desc:" << ProjectDesc
                   << "| Vacant:" << vacantSpot << "| Duration:" << expectedDuration
                   << "| Dept:" << department << "| Applicants:" << applicants
-                  << "| Created:" << CreatedAt;
+                 << "| Created:" << CreatedAt << "\n";
          displayApplicants(db, vacantSpot);
     }
     else
@@ -50,7 +50,7 @@ void ProjApplication::displayApplicants(QSqlDatabase &db, QString &vacantSpot)
             message     = query.value("message").toString();
             appliedAt   = query.value("AppliedAt").toString();
 
-            Application temp(AID, &vacantSpot, PID, SID, status, engineScore,
+            Application temp(AID, &vacantSpot, PID, SID, &status, engineScore,
                               message, appliedAt, db);
             temp.display();
             temp.getCV();

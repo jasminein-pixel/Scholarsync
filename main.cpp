@@ -7,8 +7,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     File f1;
-    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
 
+    tryagain:;
+    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
     db.setDatabaseName(
         "DRIVER={ODBC Driver 18 for SQL Server};"
         "SERVER=scholarsync.database.windows.net;"
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
     if (db.open())
     {
         qDebug() << "Azure SQL Connected Successfully";
+
         ProjApplication p("2");
         p.displayDetails(db);
         // f1.uploadCV("1", "Rahul Shrestha", db);
@@ -31,6 +33,7 @@ int main(int argc, char *argv[])
     }
     else
     {
+        goto tryagain;
         qDebug() << "Connection Failed:";
         qDebug() << db.lastError().text();
     }

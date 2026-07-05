@@ -56,8 +56,9 @@ void Notification::createAlert(QString aid, QSqlDatabase const &db, bool accepte
         message = "Sorry! You have been rejected for %1";
         message = message.arg(projectName);
     }
-
-    query.prepare("INSERT INTO StudentInbox (SID, Info) VALUES (:sid, :message)");
+    QString type = "CREDIT ALERT";
+    query.prepare("INSERT INTO StudentInbox (SID, Info, Type ) VALUES (:sid, :message, :type)");
+    query.bindValue(":type", type);
     query.bindValue(":sid", sid);
     query.bindValue(":message", message);
     if (!query.exec())
@@ -98,10 +99,11 @@ void Notification::creditAlert(QString Credits, QString pid, QString SID, QSqlDa
 
     QString message = "Congrats!! You Have Received %1 Credits From %2 On completion of the Project %3";
     message = message.arg(Credits, teacherName, projectName);
-
-    query.prepare("INSERT INTO StudentInbox (SID, Info) VALUES (:sid, :message)");
+    QString type = "CREDIT ALERT";
+    query.prepare("INSERT INTO StudentInbox (SID, Info, Type) VALUES (:sid, :message, :type)");
     query.bindValue(":sid", SID);
     query.bindValue(":message", message);
+    query.bindValue(":type", type);
     if (!query.exec())
     {
         qDebug() << "Failed to insert credit alert:" << query.lastError().text();

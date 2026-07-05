@@ -1,10 +1,22 @@
 #include "modification.h"
-void formatTime(QString unformattedTime, QString &date , QString &time)
+
+
+void formatTime(QString unformattedTime, QString &date, QString &time)
 {
-    int index;
-    index = unformattedTime.indexOf("T");
-    date = unformattedTime.left(index);
-    time = unformattedTime.mid(index+1, 8);
+    QDateTime utc = QDateTime::fromString(unformattedTime, Qt::ISODate);
+    if (!utc.isValid())
+    {
+        qDebug() << "Failed" << unformattedTime;
+        date = "";
+        time = "";
+        return;
+    }
+    utc.setTimeZone(QTimeZone::UTC);
+
+    QDateTime nepalTime = utc.toTimeZone(QTimeZone("Asia/Kathmandu"));
+
+    date = nepalTime.toString("yyyy-MM-dd");
+    time = nepalTime.toString("HH:mm:ss");
 }
 
 QString spaceRemover(QString string)

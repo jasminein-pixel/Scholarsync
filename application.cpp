@@ -25,7 +25,13 @@ void Application::getApplicantDetails(QString SID, QSqlDatabase const &db)
 
 void Application::accept(QSqlDatabase const &db)
 {
+
     qint16 vac = (*vacantSpot).toInt();
+    if(vac<= 0)
+    {
+        qDebug() << "NO MORE VACANT SPOT LEFT";
+    }
+    else{
     vac--;
     (*vacantSpot) = QString::number(vac);
 
@@ -42,13 +48,14 @@ void Application::accept(QSqlDatabase const &db)
         return;
     }
 
-    status = "APPROVED";
+    *status = "APPROVED";
     query.prepare("UPDATE Applications SET Status = :s WHERE AID = :aid;");
-    query.bindValue(":s", status);
+    query.bindValue(":s", *status);
     query.bindValue(":aid", AID);
     if (!query.exec())
     {
         qDebug() << "Failed to update application status:" << query.lastError().text();
+    }
     }
 }
 
@@ -58,9 +65,9 @@ void Application::reject(QSqlDatabase const &db)
     n.createAlert(AID, db, false);
 
     QSqlQuery query(db);
-    status = "REJECTED";
+    *status = "REJECTED";
     query.prepare("UPDATE Applications SET Status = :s WHERE AID = :aid;");
-    query.bindValue(":s", status);
+    query.bindValue(":s", *status);
     query.bindValue(":aid", AID);
     if (!query.exec())
     {
@@ -79,3 +86,29 @@ void Application::getCV()
         qDebug() << "CV UNAVAILABLE GNG";
     }
 }
+
+void Application::fillSkills(QString SID, QSqlDatabase const &db)
+{
+    skills.clear();
+    QSqlQuery query(db);
+    QString skill, proficiency, details;
+    query.prepare("SELECT SkillName,Proficiency "
+                  "FROM SkillList WHERE SID = :sid");
+    query.bindValue(":sid", SID);
+
+    if (query.exec())
+    {
+        while (query.next())
+        {
+            skill         = query.value("SkillName").toString();
+            proficiency         = query.value("Proficiency").toString();
+            details = skill + '|' + proficiency;
+            skills.append(details);
+        }
+    }
+    else
+    {
+        qDebug() << "failed to get skills";
+    }
+}
+
