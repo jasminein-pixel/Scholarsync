@@ -1,6 +1,7 @@
 
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QThread>
 #include "applicationManager.h"
 
 int main(int argc, char *argv[])
@@ -8,8 +9,6 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     File f1;
 
-    qint16 count =0;
-tryagain:;
     QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
     db.setDatabaseName(
         "DRIVER={ODBC Driver 18 for SQL Server};"
@@ -25,7 +24,7 @@ tryagain:;
     {
         qDebug() << "Azure SQL Connected Successfully";
 
-        ProjApplication p("2");
+        ProjApplication p("1");
         p.displayDetails(db);
         // f1.uploadCV("1", "Rahul Shrestha", db);
         // f1.uploadCV("2", "Jasmine Shrestha", db);
@@ -34,12 +33,6 @@ tryagain:;
     }
     else
     {
-        if(count < 10)
-        {
-            count ++;
-            qDebug() << "CONNECTION FAILED TRYING AGAIN , TRY :" << count << "\n";
-            goto tryagain;
-        }
         qDebug() << "Connection Failed:";
         qDebug() << db.lastError().text();
     }
