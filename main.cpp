@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     File f1;
 
-    tryagain:;
+    qint16 count =0;
+tryagain:;
     QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
     db.setDatabaseName(
         "DRIVER={ODBC Driver 18 for SQL Server};"
@@ -33,7 +34,12 @@ int main(int argc, char *argv[])
     }
     else
     {
-        goto tryagain;
+        if(count < 10)
+        {
+            count ++;
+            qDebug() << "CONNECTION FAILED TRYING AGAIN , TRY :" << count << "\n";
+            goto tryagain;
+        }
         qDebug() << "Connection Failed:";
         qDebug() << db.lastError().text();
     }
