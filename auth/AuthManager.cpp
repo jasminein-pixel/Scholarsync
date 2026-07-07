@@ -58,7 +58,10 @@ bool AuthManager::registerStudent(
     const QString &level,
     int semester,
     const QString &preference,
-    const QString &contactInfo)
+    const QString &contactInfo,
+    const QString &securityAnswer1,
+    const QString &securityAnswer2,
+    const QString &securityAnswer3)
 {
     QSqlQuery query(DatabaseManager::instance().database());
 
@@ -87,8 +90,8 @@ bool AuthManager::registerStudent(
     query.prepare(
         "INSERT INTO StudentDetails "
         "(Name, Email, PasswordHash, Salt, Department, Program, "
-        "Level, Semester, Preference, Credit, ContactInfo) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "Level, Semester, Preference, Credit, ContactInfo, SecurityAnswer1, SecurityAnswer2, SecurityAnswer3) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
     query.addBindValue(name);
@@ -102,6 +105,9 @@ bool AuthManager::registerStudent(
     query.addBindValue(preference);
     query.addBindValue(0);
     query.addBindValue(contactInfo);
+    query.addBindValue(securityAnswer1);
+    query.addBindValue(securityAnswer2);
+    query.addBindValue(securityAnswer3);
 
     if (!query.exec())
     {
@@ -159,7 +165,10 @@ bool AuthManager::registerTeacher(
     const QString &password,
     const QString &department,
     const QString &qualification,
-    const QString &contactInfo)
+    const QString &contactInfo,
+    const QString &securityAnswer1,
+    const QString &securityAnswer2,
+    const QString &securityAnswer3)
 {
     QSqlQuery query(DatabaseManager::instance().database());
 
@@ -187,8 +196,8 @@ bool AuthManager::registerTeacher(
 
     query.prepare(
         "INSERT INTO TeacherDetails "
-        "(Name, Email, PasswordHash, Salt, Department, Qualification, ContactInfo) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "(Name, Email, PasswordHash, Salt, Department, Qualification, ContactInfo, SecurityAnswer1, SecurityAnswer2, SecurityAnswer3) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
     query.addBindValue(name);
@@ -198,6 +207,9 @@ bool AuthManager::registerTeacher(
     query.addBindValue(department);
     query.addBindValue(qualification);
     query.addBindValue(contactInfo);
+    query.addBindValue(securityAnswer1);
+    query.addBindValue(securityAnswer2);
+    query.addBindValue(securityAnswer3);
 
     if (!query.exec())
     {

@@ -32,12 +32,16 @@ private:
     QComboBox *roleBox;
 
     // Shared fields
+
     QLineEdit *nameInput;
     QLineEdit *emailInput;
     QLineEdit *passwordInput;
     QLineEdit *confirmPasswordInput;
     QLineEdit *contactInput;
     QLineEdit *departmentInput;
+    QLineEdit *securityQuestion1Input;
+    QLineEdit *securityQuestion2Input;
+    QLineEdit *securityQuestion3Input;
 
     // Student only fields
     QLineEdit *programInput;

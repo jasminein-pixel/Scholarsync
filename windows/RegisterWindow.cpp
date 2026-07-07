@@ -126,6 +126,11 @@ void RegisterWindow::setupUI()
     confirmPasswordInput->setEchoMode(QLineEdit::Password);
     addField("Department",        departmentInput,      "Your department",        layout);
     addField("Contact",           contactInput,         "Phone number",           layout);
+    addField("Which city were you born in? (Security Question 1)", securityQuestion1Input, "Example: Kathmandu, Biratnagar, etc", layout );
+    addField("What is your favourite colour? (Security Question 2)", securityQuestion2Input, "Example: Green, Blue, etc", layout );
+    addField("What is your favourite food? (Security Question 3)", securityQuestion3Input, "Example: Pizza, Momo, Rice, etc", layout );
+
+
 
     // ── Student-only fields ──
     studentFieldsWidget = new QWidget();
@@ -238,6 +243,13 @@ void RegisterWindow::onRegisterClicked()
         statusLabel->setText("Password must be at least 6 characters.");
         return;
     }
+    if (securityQuestion1Input->text().trimmed().isEmpty() ||
+        securityQuestion2Input->text().trimmed().isEmpty() ||
+        securityQuestion3Input->text().trimmed().isEmpty())
+    {
+        statusLabel->setText("Please answer all security questions.");
+        return;
+    }
 
     if (!DatabaseManager::instance().isConnected()) {
         DatabaseManager::instance().connect();
@@ -256,7 +268,10 @@ void RegisterWindow::onRegisterClicked()
             levelBox->currentText(),
             semesterBox->value(),
             preferenceBox->currentText(),
-            contactInput->text().trimmed());
+            contactInput->text().trimmed(),
+            securityQuestion1Input->text().trimmed(),
+            securityQuestion2Input->text().trimmed(),
+            securityQuestion3Input->text().trimmed());
     } else {
         success = AuthManager::registerTeacher(
             nameInput->text().trimmed(),
@@ -264,7 +279,10 @@ void RegisterWindow::onRegisterClicked()
             passwordInput->text(),
             departmentInput->text().trimmed(),
             qualificationInput->text().trimmed(),
-            contactInput->text().trimmed());
+            contactInput->text().trimmed(),
+            securityQuestion1Input->text().trimmed(),
+            securityQuestion2Input->text().trimmed(),
+            securityQuestion3Input->text().trimmed());
     }
 
     if (success) {

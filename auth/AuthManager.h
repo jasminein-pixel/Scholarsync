@@ -32,7 +32,10 @@ public:
                                 const QString &level,
                                 int semester,
                                 const QString &preference,
-                                const QString &contactInfo);
+                                const QString &contactInfo,
+                                const QString &securityAnswer1,
+                                const QString &securityAnswer2,
+                                const QString &securityAnswer3);
 
     static bool loginStudent(const QString &email,
                              const QString &password);
@@ -46,7 +49,10 @@ public:
                                 const QString &password,
                                 const QString &department,
                                 const QString &qualification,
-                                const QString &contactInfo);
+                                const QString &contactInfo,
+                                const QString &securityAnswer1,
+                                const QString &securityAnswer2,
+                                const QString &securityAnswer3);
 
     static bool loginTeacher(const QString &email,
                              const QString &password);
