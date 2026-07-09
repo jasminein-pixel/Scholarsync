@@ -68,6 +68,8 @@ private:
     // Sidebar buttons
     QPushButton *btnSkills, *btnInterests, *btnBrowse,
         *btnCV, *btnRecommend, *btnInbox;
+    void adjustTableHeight(QTableWidget *table, int dataRowCount);
+    void adjustListHeight(QListWidget *list, int dataRowCount, int rowHeight);
 
     // Username label in sidebar (clickable -> opens profile)
     QLabel *nameLabel;
@@ -114,7 +116,8 @@ private:
     QTableWidget *profileApplicationsTable;  // all applications / applied projects (lifetime)
     QTableWidget *profileCurrentTable;       // currently active projects
     QTableWidget *profilePastTable;          // completed / past projects
-    QTableWidget *profileSkillsTable;        // read-only view of My Skills
+    QTableWidget *profileSkillsTable;
+    QTableWidget *profileInterestsTable;     // read-only view of My Interests   <-- add this    // read-only view of My Skills
 
     // Lifetime application status breakdown
     PieChartWidget *profileAppsChart;

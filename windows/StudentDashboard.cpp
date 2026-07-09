@@ -169,6 +169,31 @@ QString StudentDashboard::tableStyle() {
             border: none;
             border-bottom: 1px solid #e2e8f0;
         }
+        QScrollBar:vertical {
+            background: transparent;
+            width: 10px;
+            margin: 2px;
+        }
+        QScrollBar::handle:vertical {
+            background: #cbd5e1;
+            border-radius: 5px;
+            min-height: 24px;
+        }
+        QScrollBar::handle:vertical:hover { background: #94a3b8; }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+
+        /* Row-action buttons: styled here once instead of per-button setStyleSheet() calls */
+        QPushButton#rowDangerBtn {
+            background-color: #ef4444; color: white; border: none;
+            border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+        }
+        QPushButton#rowDangerBtn:hover { background-color: #dc2626; }
+        QPushButton#rowPrimaryBtn {
+            background-color: #1d4ed8; color: white; border: none;
+            border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+        }
+        QPushButton#rowPrimaryBtn:hover { background-color: #1e40af; }
     )";
 }
 QString StudentDashboard::inputStyle() {
@@ -231,6 +256,34 @@ void StudentDashboard::activateBtn(QPushButton *btn) {
     if (activeBtn) activeBtn->setStyleSheet(sidebarBtnStyle());
     activeBtn = btn;
     btn->setStyleSheet(sidebarBtnActiveStyle());
+}
+
+// ═══════════════════════════════════════════════
+//  Responsive height helpers
+//  ≤5 rows of data → shrink to fit; >5 rows → cap at 5 rows and scroll
+// ═══════════════════════════════════════════════
+void StudentDashboard::adjustTableHeight(QTableWidget *table, int dataRowCount)
+{
+    const int rowHeight    = table->verticalHeader()->defaultSectionSize();
+    const int headerHeight = table->horizontalHeader()->height();
+    const int frame        = table->frameWidth() * 2 + 2;
+
+    int visibleRows = qBound(1, dataRowCount, 5); // at least 1 (covers the "empty" placeholder row)
+    int height = headerHeight + rowHeight * visibleRows + frame;
+
+    table->setMinimumHeight(height);
+    table->setMaximumHeight(height);
+}
+
+void StudentDashboard::adjustListHeight(QListWidget *list, int dataRowCount, int rowHeight)
+{
+    const int frame = list->frameWidth() * 2 + 8; // padding baked into the stylesheet
+
+    int visibleRows = qBound(1, dataRowCount, 5);
+    int height = rowHeight * visibleRows + frame;
+
+    list->setMinimumHeight(height);
+    list->setMaximumHeight(height);
 }
 
 // ═══════════════════════════════════════════════
@@ -500,8 +553,11 @@ QWidget* StudentDashboard::buildSkillsScreen()
     skillsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     skillsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     skillsTable->verticalHeader()->hide();
+    skillsTable->verticalHeader()->setDefaultSectionSize(38);
     skillsTable->setStyleSheet(tableStyle());
-    skillsTable->setMinimumHeight(300);
+    // height is now set dynamically in loadSkills() via adjustTableHeight()
+    skillsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    skillsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(skillsTable);
 
     // Add skill row
@@ -563,8 +619,23 @@ QWidget* StudentDashboard::buildInterestsScreen()
             color: #1e3a8a;
         }
         QListWidget::item:hover { background: #f8fafc; }
+        QScrollBar:vertical {
+            background: transparent;
+            width: 10px;
+            margin: 2px;
+        }
+        QScrollBar::handle:vertical {
+            background: #cbd5e1;
+            border-radius: 5px;
+            min-height: 24px;
+        }
+        QScrollBar::handle:vertical:hover { background: #94a3b8; }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
     )");
-    interestsList->setMinimumHeight(300);
+    // height is now set dynamically in loadInterests() via adjustListHeight()
+    interestsList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    interestsList->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(interestsList);
 
     auto *addRow = new QHBoxLayout();
@@ -606,6 +677,8 @@ QWidget* StudentDashboard::buildBrowseScreen()
     layout->addWidget(screenSub("Explore active research projects available for application."));
 
     auto *topRow = new QHBoxLayout();
+    topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
+    topRow->setSpacing(0);
     auto *refreshBtn = new QPushButton("🔄  Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
     refreshBtn->setCursor(Qt::PointingHandCursor);
@@ -622,11 +695,14 @@ QWidget* StudentDashboard::buildBrowseScreen()
     projectsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     projectsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     projectsTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
-    projectsTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
     projectsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     projectsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     projectsTable->verticalHeader()->hide();
+    projectsTable->verticalHeader()->setDefaultSectionSize(38);
     projectsTable->setStyleSheet(tableStyle());
+    // height is now set dynamically in loadProjects() via adjustTableHeight()
+    projectsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    projectsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(projectsTable);
 
     return w;
@@ -715,6 +791,8 @@ QWidget* StudentDashboard::buildRecommendScreen()
         "Projects recommended based on your skills and interests, ranked by match score."));
 
     auto *topRow = new QHBoxLayout();
+    topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
+    topRow->setSpacing(0);
     auto *refreshBtn = new QPushButton("Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
     refreshBtn->setCursor(Qt::PointingHandCursor);
@@ -734,7 +812,11 @@ QWidget* StudentDashboard::buildRecommendScreen()
     recommendTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     recommendTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     recommendTable->verticalHeader()->hide();
+    recommendTable->verticalHeader()->setDefaultSectionSize(38);
     recommendTable->setStyleSheet(tableStyle());
+    // height is now set dynamically in loadRecommendations() via adjustTableHeight()
+    recommendTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    recommendTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(recommendTable);
 
     return w;
@@ -755,6 +837,8 @@ QWidget* StudentDashboard::buildInboxScreen()
     layout->addWidget(screenSub("Notifications about your applications and credits."));
 
     auto *topRow = new QHBoxLayout();
+    topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
+    topRow->setSpacing(0);
     auto *refreshBtn = new QPushButton("🔄  Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
     refreshBtn->setCursor(Qt::PointingHandCursor);
@@ -782,7 +866,15 @@ QWidget* StudentDashboard::buildInboxScreen()
             background: #eff6ff;
             color: #1e3a8a;
         }
+        QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+        QScrollBar::handle:vertical { background: #cbd5e1; border-radius: 5px; min-height: 24px; }
+        QScrollBar::handle:vertical:hover { background: #94a3b8; }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
     )");
+    // height is now set dynamically in loadInbox() via adjustListHeight()
+    inboxList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    inboxList->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(inboxList);
 
     return w;
@@ -910,9 +1002,27 @@ QWidget* StudentDashboard::buildProfileScreen()
     profileSkillsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     profileSkillsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     profileSkillsTable->verticalHeader()->hide();
+    profileSkillsTable->verticalHeader()->setDefaultSectionSize(38);
     profileSkillsTable->setStyleSheet(tableStyle());
-    profileSkillsTable->setMinimumHeight(140);
+    // height is now set dynamically in loadProfile() via adjustTableHeight()
+    profileSkillsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    profileSkillsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(profileSkillsTable);
+
+    // ── My Interests (read-only view — edit from the "My Interests" sidebar page) ──
+    layout->addWidget(profileSectionHeader("My Interests"));
+    profileInterestsTable = new QTableWidget(0, 1);
+    profileInterestsTable->setHorizontalHeaderLabels({"Interest"});
+    profileInterestsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    profileInterestsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    profileInterestsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    profileInterestsTable->verticalHeader()->hide();
+    profileInterestsTable->verticalHeader()->setDefaultSectionSize(38);
+    profileInterestsTable->setStyleSheet(tableStyle());
+    // height is now set dynamically in loadProfile() via adjustTableHeight()
+    profileInterestsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    profileInterestsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    layout->addWidget(profileInterestsTable);
 
     // Edit / Save toggle logic
     connect(profileEditSaveBtn, &QPushButton::clicked, this, [this]{
@@ -958,8 +1068,11 @@ QWidget* StudentDashboard::buildProfileScreen()
     profileApplicationsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     profileApplicationsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     profileApplicationsTable->verticalHeader()->hide();
+    profileApplicationsTable->verticalHeader()->setDefaultSectionSize(38);
     profileApplicationsTable->setStyleSheet(tableStyle());
-    profileApplicationsTable->setMinimumHeight(160);
+    // height is now set dynamically in loadProfile() via adjustTableHeight()
+    profileApplicationsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    profileApplicationsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(profileApplicationsTable);
 
     // ── Current Projects table (now includes Supervisor) ──
@@ -974,8 +1087,11 @@ QWidget* StudentDashboard::buildProfileScreen()
     profileCurrentTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     profileCurrentTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     profileCurrentTable->verticalHeader()->hide();
+    profileCurrentTable->verticalHeader()->setDefaultSectionSize(38);
     profileCurrentTable->setStyleSheet(tableStyle());
-    profileCurrentTable->setMinimumHeight(140);
+    // height is now set dynamically in loadProfile() via adjustTableHeight()
+    profileCurrentTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    profileCurrentTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(profileCurrentTable);
 
     // ── Past Projects table ──
@@ -987,8 +1103,11 @@ QWidget* StudentDashboard::buildProfileScreen()
     profilePastTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     profilePastTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     profilePastTable->verticalHeader()->hide();
+    profilePastTable->verticalHeader()->setDefaultSectionSize(38);
     profilePastTable->setStyleSheet(tableStyle());
-    profilePastTable->setMinimumHeight(140);
+    // height is now set dynamically in loadProfile() via adjustTableHeight()
+    profilePastTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    profilePastTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(profilePastTable);
 
     // ── Lifetime application status breakdown (pie chart) ──
@@ -1011,6 +1130,7 @@ QWidget* StudentDashboard::buildProfileScreen()
 
 void StudentDashboard::loadSkills()
 {
+    skillsTable->setUpdatesEnabled(false);
     skillsTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
@@ -1022,14 +1142,11 @@ void StudentDashboard::loadSkills()
     int row = 0;
     while (q.next()) {
         skillsTable->insertRow(row);
-        skillsTable->setItem(row, 0,
-                             new QTableWidgetItem(q.value(0).toString()));
-        skillsTable->setItem(row, 1,
-                             new QTableWidgetItem(q.value(1).toString()));
+        skillsTable->setItem(row, 0, new QTableWidgetItem(q.value(0).toString()));
+        skillsTable->setItem(row, 1, new QTableWidgetItem(q.value(1).toString()));
 
-        // Delete button
         auto *delBtn = new QPushButton("Remove");
-        delBtn->setStyleSheet(dangerBtnStyle());
+        delBtn->setObjectName("rowDangerBtn"); // styled via tableStyle(), no per-row setStyleSheet
         delBtn->setCursor(Qt::PointingHandCursor);
         QString skillName = q.value(0).toString();
         connect(delBtn, &QPushButton::clicked, this, [this, skillName]{
@@ -1049,6 +1166,9 @@ void StudentDashboard::loadSkills()
         empty->setForeground(QColor("#94a3b8"));
         skillsTable->setItem(0, 0, empty);
     }
+
+    adjustTableHeight(skillsTable, row);
+    skillsTable->setUpdatesEnabled(true);
 }
 
 void StudentDashboard::addSkill()
@@ -1099,22 +1219,30 @@ void StudentDashboard::deleteSkill()
 
 void StudentDashboard::loadInterests()
 {
+    interestsList->setUpdatesEnabled(false);
     interestsList->clear();
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
 
     auto q = db.prepareAndExecute(
-        "SELECT Preference FROM StudentDetails WHERE SID = ?",
+        "SELECT Interest FROM Interest WHERE SID = ? ORDER BY Interest ASC",
         {currentSID});
 
-    if (q.next()) {
-        QString prefs = q.value(0).toString();
-        if (!prefs.isEmpty()) {
-            QStringList items = prefs.split(",", Qt::SkipEmptyParts);
-            for (auto &item : items)
-                interestsList->addItem(item.trimmed());
-        }
+    int count = 0;
+    while (q.next()) {
+        interestsList->addItem(q.value(0).toString());
+        count++;
     }
+
+    if (count == 0) {
+        auto *placeholder = new QListWidgetItem("No interests added yet.");
+        placeholder->setFlags(placeholder->flags() & ~Qt::ItemIsSelectable);
+        placeholder->setForeground(QColor("#94a3b8"));
+        interestsList->addItem(placeholder);
+    }
+
+    adjustListHeight(interestsList, count, 34);
+    interestsList->setUpdatesEnabled(true);
 }
 
 void StudentDashboard::addInterest()
@@ -1125,17 +1253,19 @@ void StudentDashboard::addInterest()
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
 
-    // Get current preferences
-    auto q = db.prepareAndExecute(
-        "SELECT Preference FROM StudentDetails WHERE SID = ?", {currentSID});
-    QString current = "";
-    if (q.next()) current = q.value(0).toString();
-
-    QString updated = current.isEmpty() ? interest : current + ", " + interest;
+    auto check = db.prepareAndExecute(
+        "SELECT COUNT(*) FROM Interest WHERE SID = ? AND Interest = ?",
+        {currentSID, interest});
+    check.next();
+    if (check.value(0).toInt() > 0) {
+        QMessageBox::warning(this, "Duplicate", "You already have this interest.");
+        interestInput->clear();
+        return;
+    }
 
     db.prepareAndExecute(
-        "UPDATE StudentDetails SET Preference = ? WHERE SID = ?",
-        {updated, currentSID});
+        "INSERT INTO Interest (SID, Interest) VALUES (?, ?)",
+        {currentSID, interest});
 
     interestInput->clear();
     loadInterests();
@@ -1144,31 +1274,22 @@ void StudentDashboard::addInterest()
 void StudentDashboard::deleteInterest()
 {
     QListWidgetItem *item = interestsList->currentItem();
-    if (!item) {
+    if (!item || !(item->flags() & Qt::ItemIsSelectable)) {
         QMessageBox::warning(this, "Select", "Please select an interest to remove.");
         return;
     }
     QString toRemove = item->text();
 
     auto &db = DatabaseManager::instance();
-    auto q = db.prepareAndExecute(
-        "SELECT Preference FROM StudentDetails WHERE SID = ?", {currentSID});
-    if (q.next()) {
-        QString current = q.value(0).toString();
-        QStringList items = current.split(",", Qt::SkipEmptyParts);
-        items.removeIf([&](const QString &s){
-            return s.trimmed().toLower() == toRemove.toLower();
-        });
-        QString updated = items.join(", ");
-        db.prepareAndExecute(
-            "UPDATE StudentDetails SET Preference = ? WHERE SID = ?",
-            {updated, currentSID});
-    }
+    db.prepareAndExecute(
+        "DELETE FROM Interest WHERE SID = ? AND Interest = ?",
+        {currentSID, toRemove});
     loadInterests();
 }
 
 void StudentDashboard::loadProjects()
 {
+    projectsTable->setUpdatesEnabled(false);
     projectsTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
@@ -1187,14 +1308,11 @@ void StudentDashboard::loadProjects()
         projectsTable->setItem(row, 3, new QTableWidgetItem(q.value(4).toString()));
         projectsTable->setItem(row, 4, new QTableWidgetItem(q.value(5).toString()));
 
-        // Apply button
         auto *applyBtn = new QPushButton("Apply");
-        applyBtn->setStyleSheet(primaryBtnStyle());
+        applyBtn->setObjectName("rowPrimaryBtn"); // styled via tableStyle(), no per-row setStyleSheet
         applyBtn->setCursor(Qt::PointingHandCursor);
         connect(applyBtn, &QPushButton::clicked, this, [this, pid]{
             auto &db = DatabaseManager::instance();
-
-            // Check if already applied
             auto check = db.prepareAndExecute(
                 "SELECT COUNT(*) FROM Applications WHERE SID = ? AND PID = ?",
                 {currentSID, pid});
@@ -1204,12 +1322,10 @@ void StudentDashboard::loadProjects()
                                          "You have already applied to this project.");
                 return;
             }
-
             db.prepareAndExecute(
                 "INSERT INTO Applications (SID, PID, Status, EngineScore, message) "
                 "VALUES (?, ?, 'reviewing', 0, 'Application submitted via ScholarSync')",
                 {currentSID, pid});
-
             QMessageBox::information(this, "Applied!",
                                      "Your application has been submitted successfully.");
             loadProjects();
@@ -1224,6 +1340,9 @@ void StudentDashboard::loadProjects()
         empty->setForeground(QColor("#94a3b8"));
         projectsTable->setItem(0, 0, empty);
     }
+
+    adjustTableHeight(projectsTable, row);
+    projectsTable->setUpdatesEnabled(true);
 }
 
 void StudentDashboard::uploadCV()
@@ -1253,23 +1372,22 @@ void StudentDashboard::uploadCV()
 
 void StudentDashboard::loadRecommendations()
 {
+    recommendTable->setUpdatesEnabled(false);
     recommendTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
 
-    // Get student skills
     auto skillQ = db.prepareAndExecute(
         "SELECT SkillName FROM SkillList WHERE SID = ?", {currentSID});
     QStringList studentSkills;
     while (skillQ.next())
         studentSkills << skillQ.value(0).toString().toLower();
 
-    // Get all active projects
     auto projQ = db.executeQuery(
         "SELECT PID, ProjectName, department FROM ProjectDetails "
         "WHERE status = 'Active' AND vacantSpot > 0");
 
-    QVector<QPair<int, QString>> scored; // {score, row data}
+    QVector<QPair<int, QString>> scored;
     QVector<QStringList> rows;
 
     while (projQ.next()) {
@@ -1277,7 +1395,6 @@ void StudentDashboard::loadRecommendations()
         QString name = projQ.value(1).toString();
         QString dept = projQ.value(2).toString();
 
-        // Get required skills for this project
         auto reqQ = db.prepareAndExecute(
             "SELECT skillName FROM skillRequirement WHERE PID = ?", {pid});
         int matches = 0, total = 0;
@@ -1292,7 +1409,6 @@ void StudentDashboard::loadRecommendations()
         rows.append({name, dept, QString::number(score) + "%", QString::number(pid)});
     }
 
-    // Sort by score descending
     QVector<int> indices(rows.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](int a, int b){
@@ -1305,22 +1421,17 @@ void StudentDashboard::loadRecommendations()
         recommendTable->setItem(row, 0, new QTableWidgetItem(rows[i][0]));
         recommendTable->setItem(row, 1, new QTableWidgetItem(rows[i][1]));
 
-        // Score badge
         auto *scoreItem = new QTableWidgetItem(rows[i][2]);
         scoreItem->setTextAlignment(Qt::AlignCenter);
         int score = scored[i].first;
-        if (score >= 70)
-            scoreItem->setForeground(QColor("#16a34a"));
-        else if (score >= 40)
-            scoreItem->setForeground(QColor("#d97706"));
-        else
-            scoreItem->setForeground(QColor("#dc2626"));
+        if (score >= 70) scoreItem->setForeground(QColor("#16a34a"));
+        else if (score >= 40) scoreItem->setForeground(QColor("#d97706"));
+        else scoreItem->setForeground(QColor("#dc2626"));
         recommendTable->setItem(row, 2, scoreItem);
 
-        // Apply button
         int pid = rows[i][3].toInt();
         auto *applyBtn = new QPushButton("Apply");
-        applyBtn->setStyleSheet(primaryBtnStyle());
+        applyBtn->setObjectName("rowPrimaryBtn"); // styled via tableStyle(), no per-row setStyleSheet
         applyBtn->setCursor(Qt::PointingHandCursor);
         connect(applyBtn, &QPushButton::clicked, this, [this, pid]{
             auto &db = DatabaseManager::instance();
@@ -1350,10 +1461,14 @@ void StudentDashboard::loadRecommendations()
         empty->setForeground(QColor("#94a3b8"));
         recommendTable->setItem(0, 0, empty);
     }
+
+    adjustTableHeight(recommendTable, indices.size());
+    recommendTable->setUpdatesEnabled(true);
 }
 
 void StudentDashboard::loadInbox()
 {
+    inboxList->setUpdatesEnabled(false);
     inboxList->clear();
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
@@ -1363,6 +1478,7 @@ void StudentDashboard::loadInbox()
         "WHERE SID = ? ORDER BY ReceivedAt DESC",
         {currentSID});
 
+    int count = 0;
     while (q.next()) {
         QString info = q.value(0).toString();
         QString type = q.value(1).toString();
@@ -1375,11 +1491,15 @@ void StudentDashboard::loadInbox()
         if (type == "CREDIT ALERT")
             item->setForeground(QColor("#d97706"));
         inboxList->addItem(item);
+        count++;
     }
 
-    if (inboxList->count() == 0) {
+    if (count == 0) {
         inboxList->addItem("Your inbox is empty.");
     }
+
+    adjustListHeight(inboxList, count, 58);
+    inboxList->setUpdatesEnabled(true);
 }
 
 // ═══════════════════════════════════════════════
@@ -1401,6 +1521,12 @@ void StudentDashboard::loadProfile()
 {
     auto &db = DatabaseManager::instance();
     if (!db.isConnected()) db.connect();
+
+    profileSkillsTable->setUpdatesEnabled(false);
+    profileInterestsTable->setUpdatesEnabled(false);
+    profileApplicationsTable->setUpdatesEnabled(false);
+    profileCurrentTable->setUpdatesEnabled(false);
+    profilePastTable->setUpdatesEnabled(false);
 
     // Always reset the info card to display (non-edit) mode when the
     // profile is opened or refreshed.
@@ -1473,6 +1599,28 @@ void StudentDashboard::loadProfile()
         empty->setForeground(QColor("#94a3b8"));
         profileSkillsTable->setItem(0, 0, empty);
     }
+    adjustTableHeight(profileSkillsTable, row);
+
+    // ── My Interests (read-only) ──
+    profileInterestsTable->setRowCount(0);
+    auto interestsQ = db.prepareAndExecute(
+        "SELECT Interest FROM Interest WHERE SID = ? ORDER BY Interest ASC",
+        {currentSID});
+
+    row = 0;
+    while (interestsQ.next()) {
+        profileInterestsTable->insertRow(row);
+        profileInterestsTable->setItem(row, 0,
+                                       new QTableWidgetItem(interestsQ.value(0).toString()));
+        row++;
+    }
+    if (row == 0) {
+        profileInterestsTable->insertRow(0);
+        auto *empty = new QTableWidgetItem("No interests added yet.");
+        empty->setForeground(QColor("#94a3b8"));
+        profileInterestsTable->setItem(0, 0, empty);
+    }
+    adjustTableHeight(profileInterestsTable, row);
 
     // ── Applications (all, lifetime) ──
     profileApplicationsTable->setRowCount(0);
@@ -1513,6 +1661,7 @@ void StudentDashboard::loadProfile()
         empty->setForeground(QColor("#94a3b8"));
         profileApplicationsTable->setItem(0, 0, empty);
     }
+    adjustTableHeight(profileApplicationsTable, row);
 
     // ── Current projects: my application was accepted AND the project is
     //    still active (Application status: accepted; Project status: active) ──
@@ -1545,6 +1694,7 @@ void StudentDashboard::loadProfile()
         empty->setForeground(QColor("#94a3b8"));
         profileCurrentTable->setItem(0, 0, empty);
     }
+    adjustTableHeight(profileCurrentTable, row);
 
     // ── Past projects: only ones where my application was accepted AND
     //    the project itself has since been marked completed ──
@@ -1571,6 +1721,7 @@ void StudentDashboard::loadProfile()
         empty->setForeground(QColor("#94a3b8"));
         profilePastTable->setItem(0, 0, empty);
     }
+    adjustTableHeight(profilePastTable, row);
 
     // ── Lifetime application breakdown (pie chart) ──
     //    Reviewing / Rejected come straight from the application status.
@@ -1607,6 +1758,12 @@ void StudentDashboard::loadProfile()
         {"Completed", cCompleted, QColor("#1e3a8a")}, // deep navy — matches sidebar bg
         {"Rejected",  cRejected,  QColor("#ef4444")}  // red accent for the one negative outcome
     });
+
+    profileSkillsTable->setUpdatesEnabled(true);
+    profileInterestsTable->setUpdatesEnabled(true);
+    profileApplicationsTable->setUpdatesEnabled(true);
+    profileCurrentTable->setUpdatesEnabled(true);
+    profilePastTable->setUpdatesEnabled(true);
 }
 
 QWidget* StudentDashboard::makePlaceholder(const QString &text) {
