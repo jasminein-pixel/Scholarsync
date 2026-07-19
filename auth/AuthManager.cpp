@@ -7,10 +7,6 @@
 #include <QRandomGenerator>
 #include <QCryptographicHash>
 
-// ─────────────────────────────────────────
-//  Password Utilities
-// ─────────────────────────────────────────
-
 QString AuthManager::generateSalt()
 {
     QByteArray salt;
@@ -45,10 +41,7 @@ bool AuthManager::verifyPassword(
     return hashPassword(password, salt) == storedHash;
 }
 
-// ─────────────────────────────────────────
 //  Student Authentication
-// ─────────────────────────────────────────
-
 bool AuthManager::registerStudent(
     const QString &name,
     const QString &email,
@@ -87,13 +80,12 @@ bool AuthManager::registerStudent(
     QString salt           = generateSalt();
     QString hashedPassword = hashPassword(password, salt);
 
-    query.prepare(
+       query.prepare(
         "INSERT INTO StudentDetails "
         "(Name, Email, PasswordHash, Salt, Department, Program, "
         "Level, Semester, Preference, Credit, ContactInfo, SecurityAnswer1, SecurityAnswer2, SecurityAnswer3) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-
     query.addBindValue(name);
     query.addBindValue(email);
     query.addBindValue(hashedPassword);
@@ -118,6 +110,7 @@ bool AuthManager::registerStudent(
     qDebug() << "Student Registered Successfully.";
     return true;
 }
+
 
 bool AuthManager::loginStudent(
     const QString &email,
@@ -155,10 +148,7 @@ bool AuthManager::loginStudent(
     return true;
 }
 
-// ─────────────────────────────────────────
 //  Teacher Authentication
-// ─────────────────────────────────────────
-
 bool AuthManager::registerTeacher(
     const QString &name,
     const QString &email,
@@ -199,6 +189,7 @@ bool AuthManager::registerTeacher(
         "(Name, Email, PasswordHash, Salt, Department, Qualification, ContactInfo, SecurityAnswer1, SecurityAnswer2, SecurityAnswer3) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
+        
 
     query.addBindValue(name);
     query.addBindValue(email);
@@ -220,6 +211,7 @@ bool AuthManager::registerTeacher(
     qDebug() << "Teacher Registered Successfully.";
     return true;
 }
+
 
 bool AuthManager::loginTeacher(
     const QString &email,
@@ -254,5 +246,84 @@ bool AuthManager::loginTeacher(
     }
 
     qDebug() << "Teacher Login Successful.";
+    return true;
+}
+
+bool AuthManager::emailExists(const QString &email, bool isStudent)
+{
+    QString table = isStudent ? "StudentDetails" : "TeacherDetails";
+    QSqlQuery query(DatabaseManager::instance().database());
+    query.prepare("SELECT COUNT(*) FROM " + table + " WHERE Email = ?");
+    query.addBindValue(email);
+
+    if (!query.exec())
+    {
+        qDebug() << "emailExists query failed:" << query.lastError().text();
+        return false;
+    }
+
+    query.next();
+    return query.value(0).toInt() > 0;
+}
+
+bool AuthManager::verifySecurityAnswers(
+    const QString &email,
+    const QString &answer1,
+    const QString &answer2,
+    const QString &answer3,
+    bool isStudent)
+{
+    QString table = isStudent ? "StudentDetails" : "TeacherDetails";
+    QSqlQuery query(DatabaseManager::instance().database());
+    query.prepare(
+        "SELECT SecurityAnswer1, SecurityAnswer2, SecurityAnswer3 "
+        "FROM " + table + " WHERE Email = ?");
+    query.addBindValue(email);
+
+    if (!query.exec())
+    {
+        qDebug() << "verifySecurityAnswers query failed:" << query.lastError().text();
+        return false;
+    }
+
+    if (!query.next())
+    {
+        qDebug() << "No user found for email:" << email;
+        return false;
+    }
+
+    QString stored1 = query.value(0).toString().trimmed();
+    QString stored2 = query.value(1).toString().trimmed();
+    QString stored3 = query.value(2).toString().trimmed();
+
+    return (stored1.compare(answer1, Qt::CaseInsensitive) == 0 &&
+        stored2.compare(answer2, Qt::CaseInsensitive) == 0 &&
+        stored3.compare(answer3, Qt::CaseInsensitive) == 0);
+}
+
+bool AuthManager::updatePassword(
+    const QString &email,
+    const QString &newPassword,
+    bool isStudent)
+{
+    QString table = isStudent ? "StudentDetails" : "TeacherDetails";
+    QString salt = generateSalt();
+    QString hash = hashPassword(newPassword, salt);
+
+    QSqlQuery query(DatabaseManager::instance().database());
+    query.prepare(
+        "UPDATE " + table +
+        " SET PasswordHash = ?, Salt = ? WHERE Email = ?");
+    query.addBindValue(hash);
+    query.addBindValue(salt);
+    query.addBindValue(email);
+
+    if (!query.exec())
+    {
+        qDebug() << "updatePassword failed:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << "Password updated successfully for:" << email;
     return true;
 }

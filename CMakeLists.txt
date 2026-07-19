@@ -46,6 +46,8 @@ set(PROJECT_SOURCES
     notification.cpp
     fileupload.h
     fileupload.cpp
+    forgotpassword.h
+    forgotpassword.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})

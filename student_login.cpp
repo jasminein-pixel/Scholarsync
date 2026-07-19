@@ -18,6 +18,9 @@ StudentLogin::StudentLogin(QWidget *parent)
     // Allow pressing Enter in the password field to submit
     connect(ui->passwordLineEdit, &QLineEdit::returnPressed,
             this, &StudentLogin::onLoginClicked);
+    connect(ui->btnForgotPassword, &QPushButton::clicked,
+            this, &StudentLogin::onForgotPasswordClicked);
+
 }
 
 StudentLogin::~StudentLogin()
@@ -56,4 +59,9 @@ void StudentLogin::onTogglePasswordVisibility()
         ui->passwordLineEdit->setEchoMode(QLineEdit::Password);
         ui->btnTogglePassword->setText("👁");
     }
+}
+
+void StudentLogin::onForgotPasswordClicked()
+{
+    emit forgotPasswordRequested();
 }

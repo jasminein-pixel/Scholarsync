@@ -4,6 +4,7 @@
 #include "teacher_login.h"
 #include "windows/RegisterWindow.h"
 #include "auth/AuthManager.h"
+#include "forgotpassword.h"
 #include "database/DatabaseManager.h"
 #include "windows/StudentDashboard.h"
 #include "windows/TeacherDashboard.h"
@@ -17,9 +18,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_studentLoginPage = new StudentLogin(this);
     m_teacherLoginPage = new TeacherLogin(this);
+    m_forgotPasswordPage = new ForgotPasswordPage(this);
 
-    ui->stackedWidget->addWidget(m_studentLoginPage); // index 1
-    ui->stackedWidget->addWidget(m_teacherLoginPage); // index 2
+    ui->stackedWidget->addWidget(m_studentLoginPage); 
+
+    ui->stackedWidget->addWidget(m_teacherLoginPage); 
+    ui->stackedWidget->addWidget(m_forgotPasswordPage); 
 
     ui->stackedWidget->setCurrentIndex(PageRoleSelect);
 
@@ -59,6 +63,15 @@ void MainWindow::setupConnections()
             this, &MainWindow::onStudentRegisterRequested);
     connect(m_teacherLoginPage, &TeacherLogin::registerRequested,
             this, &MainWindow::onTeacherRegisterRequested);
+                // Forgot password
+    connect(m_studentLoginPage, &StudentLogin::forgotPasswordRequested,
+            this, &MainWindow::onForgotPasswordRequested);
+    connect(m_teacherLoginPage, &TeacherLogin::forgotPasswordRequested,
+            this, &MainWindow::onForgotPasswordRequested);
+    connect(m_forgotPasswordPage, &ForgotPasswordPage::backRequested,
+            this, &MainWindow::onBackToRoleSelect);
+    connect(m_forgotPasswordPage, &ForgotPasswordPage::passwordResetSuccess,
+            this, &MainWindow::onPasswordResetSuccess);
 }
 
 void MainWindow::onStudentRoleSelected()
@@ -146,4 +159,15 @@ void MainWindow::onTeacherRegisterRequested()
     RegisterWindow *reg = new RegisterWindow();
     reg->setAttribute(Qt::WA_DeleteOnClose);
     reg->show();
+}
+
+void MainWindow::onForgotPasswordRequested()
+{
+    m_forgotPasswordPage->clearFields();
+    ui->stackedWidget->setCurrentIndex(PageForgotPassword);
+}
+
+void MainWindow::onPasswordResetSuccess()
+{
+    ui->stackedWidget->setCurrentIndex(PageRoleSelect);
 }
