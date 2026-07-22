@@ -21,7 +21,21 @@ StudentLogin::StudentLogin(QWidget *parent)
     connect(ui->btnForgotPassword, &QPushButton::clicked,
             this, &StudentLogin::onForgotPasswordClicked);
 
+            // Fix Login button visibility
+ui->btnLogin->setStyleSheet(
+    "QPushButton {"
+    "  background-color: #1d3fd6;"
+    "  color: white;"
+    "  border: none;"
+    "  border-radius: 8px;"
+    "  padding: 12px;"
+    "  font-weight: 600;"
+    "  font-size: 14px;"
+    "}"
+    "QPushButton:hover { background-color: #1733b0; }"
+);
 }
+
 
 StudentLogin::~StudentLogin()
 {
@@ -54,7 +68,7 @@ void StudentLogin::onTogglePasswordVisibility()
 {
     if (ui->passwordLineEdit->echoMode() == QLineEdit::Password) {
         ui->passwordLineEdit->setEchoMode(QLineEdit::Normal);
-        ui->btnTogglePassword->setText("🙈");
+        ui->btnTogglePassword->setText(" ");
     } else {
         ui->passwordLineEdit->setEchoMode(QLineEdit::Password);
         ui->btnTogglePassword->setText("👁");

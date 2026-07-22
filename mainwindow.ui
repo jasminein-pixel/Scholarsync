@@ -84,7 +84,7 @@
            <string notr="true">font-size: 12px; color: #6b7280; margin-bottom: 24px;</string>
           </property>
           <property name="text">
-           <string>Learn. Teach. Sync. Succeed.</string>
+           <string>Collaborate. Reasearch. Sync. Succeed.</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignHCenter</set>
@@ -110,7 +110,7 @@
            <string notr="true">font-size: 12px; color: #6b7280; margin-bottom: 16px;</string>
           </property>
           <property name="text">
-           <string>A unified platform to connect, collaborate and achieve more together.</string>
+           <string>A unified platform for collaborative research and learning.</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignHCenter</set>
@@ -139,11 +139,11 @@
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton { background-color: #1E3A8A; border: 1px solid #e3e8f5; border-radius: 12px; padding: 16px; text-align: left; font-size: 13px; } QPushButton:hover { background-color: #eef1ff; border: 1px solid #c7d2f5; }</string>
+           <string notr="true">QPushButton { background-color: #c7ccd8; border: 1px solid #e3e8f5; border-radius: 12px; padding: 16px; text-align: left; font-size: 13px; } QPushButton:hover { background-color: #7680ab; border: 1px solid #c7d2f5; }</string>
           </property>
           <property name="text">
            <string> I am a Student
-Access your courses, assignments and more.</string>
+Connect with professors for collboarative researches.</string>
           </property>
          </widget>
         </item>
@@ -156,11 +156,11 @@ Access your courses, assignments and more.</string>
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton { background-color: #1E3A8A; border: 1px solid #e3e8f5; border-radius: 12px; padding: 16px; text-align: left; font-size: 13px; } QPushButton:hover { background-color: #eef1ff; border: 1px solid #c7d2f5; }</string>
+           <string notr="true">QPushButton { background-color: #c7ccd8; border: 1px solid #e3e8f5; border-radius: 12px; padding: 16px; text-align: left; font-size: 13px; } QPushButton:hover { background-color: #7680ab; border: 1px solid #c7d2f5; }</string>
           </property>
           <property name="text">
            <string>  I am a Teacher
-Manage your classes, track progress and engage with students.</string>
+Manage your research projects and collaborate with students.</string>
           </property>
          </widget>
         </item>

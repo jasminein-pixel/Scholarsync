@@ -39,7 +39,7 @@
    </item>
    <item>
     <widget class="QLabel" name="subtitleLabel">
-     <property name="text"><string>Log in to continue your learning journey.</string></property>
+     <property name="text"><string>Log in to continue your research journey.</string></property>
      <property name="wordWrap"><bool>true</bool></property>
      <property name="styleSheet"><string notr="true">font-size: 12px; color: #6b7280; margin-bottom: 16px;</string></property>
     </widget>
