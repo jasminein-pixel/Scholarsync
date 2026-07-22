@@ -721,13 +721,31 @@ QWidget *StudentDashboard::buildBrowseScreen()
     w->setStyleSheet("background: #f8fafc;");
     auto *layout = new QVBoxLayout(w);
     layout->setContentsMargins(32, 28, 32, 28);
-    layout->setSpacing(12);
+    layout->setSpacing(4); // tighter overall spacing (was 12)
 
     layout->addWidget(screenTitle("Browse Projects"));
     layout->addWidget(screenSub("Explore active research projects available for application."));
 
+    layout->addSpacing(12); // same gap as Recommendations before the table
+
+    projectsTable = new QTableWidget(0, 6);
+    projectsTable->setHorizontalHeaderLabels({"Project Name", "Department", "Duration", "Spots", "Preference", "Action"});
+    projectsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    projectsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    projectsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    projectsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    projectsTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    projectsTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+    projectsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    projectsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    projectsTable->verticalHeader()->hide();
+    projectsTable->setStyleSheet(tableStyle());
+    layout->addWidget(projectsTable);
+
+    layout->addSpacing(12); // gap before the refresh row
+
     auto *topRow = new QHBoxLayout();
-    topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
+    topRow->setContentsMargins(0, 0, 0, 0);
     topRow->setSpacing(0);
     auto *refreshBtn = new QPushButton("🔄  Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
@@ -737,22 +755,7 @@ QWidget *StudentDashboard::buildBrowseScreen()
     topRow->addWidget(refreshBtn);
     layout->addLayout(topRow);
 
-    projectsTable = new QTableWidget(0, 6);
-    projectsTable->setHorizontalHeaderLabels({"Project Name", "Department", "Duration", "Spots", "Preference", "Action"});
-    projectsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    projectsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    projectsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    projectsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-    projectsTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
-    projectsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    projectsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    projectsTable->verticalHeader()->hide();
-    projectsTable->verticalHeader()->setDefaultSectionSize(38);
-    projectsTable->setStyleSheet(tableStyle());
-    // height is now set dynamically in loadProjects() via adjustTableHeight()
-    projectsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    projectsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    layout->addWidget(projectsTable);
+    layout->addStretch(); // push any leftover space to the bottom
 
     return w;
 }
@@ -833,23 +836,13 @@ QWidget *StudentDashboard::buildRecommendScreen()
     w->setStyleSheet("background: #f8fafc;");
     auto *layout = new QVBoxLayout(w);
     layout->setContentsMargins(32, 28, 32, 28);
-    layout->setSpacing(12);
+    layout->setSpacing(4); // tighter overall spacing (was 12)
 
     layout->addWidget(screenTitle("Recommendations"));
     layout->addWidget(screenSub(
         "Projects recommended based on your skills and interests, ranked by match score."));
 
-    auto *topRow = new QHBoxLayout();
-    topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
-    topRow->setSpacing(0);
-    auto *refreshBtn = new QPushButton("Refresh");
-    refreshBtn->setStyleSheet(primaryBtnStyle());
-    refreshBtn->setCursor(Qt::PointingHandCursor);
-    connect(refreshBtn, &QPushButton::clicked,
-            this, &StudentDashboard::loadRecommendations);
-    topRow->addStretch();
-    topRow->addWidget(refreshBtn);
-    layout->addLayout(topRow);
+    layout->addSpacing(12); // restore normal gap before the table
 
     recommendTable = new QTableWidget(0, 4);
     recommendTable->setHorizontalHeaderLabels({"Project Name", "Department", "Match Score", "Action"});
@@ -862,10 +855,25 @@ QWidget *StudentDashboard::buildRecommendScreen()
     recommendTable->verticalHeader()->hide();
     recommendTable->verticalHeader()->setDefaultSectionSize(38);
     recommendTable->setStyleSheet(tableStyle());
-    // height is now set dynamically in loadRecommendations() via adjustTableHeight()
     recommendTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     recommendTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(recommendTable);
+
+    layout->addSpacing(12); // gap before the refresh row
+
+    auto *topRow = new QHBoxLayout();
+    topRow->setContentsMargins(0, 0, 0, 0);
+    topRow->setSpacing(0);
+    auto *refreshBtn = new QPushButton("Refresh");
+    refreshBtn->setStyleSheet(primaryBtnStyle());
+    refreshBtn->setCursor(Qt::PointingHandCursor);
+    connect(refreshBtn, &QPushButton::clicked,
+            this, &StudentDashboard::loadRecommendations);
+    topRow->addStretch();
+    topRow->addWidget(refreshBtn);
+    layout->addLayout(topRow);
+
+    layout->addStretch(); // push any leftover space to the bottom
 
     return w;
 }
@@ -1543,7 +1551,6 @@ void StudentDashboard::loadRecommendations()
 
 void StudentDashboard::loadInbox()
 {
-    inboxList->setUpdatesEnabled(false);
     inboxList->clear();
     auto &db = DatabaseManager::instance();
     if (!db.isConnected())
@@ -1554,30 +1561,28 @@ void StudentDashboard::loadInbox()
         "WHERE SID = ? ORDER BY ReceivedAt DESC",
         {currentSID});
 
-    int count = 0;
     while (q.next())
     {
         QString info = q.value(0).toString();
         QString type = q.value(1).toString();
-        QString time = q.value(2).toString();
+        QString rawTime = q.value(2).toString();
+
+        QString date, time;
+        formatTime(rawTime, date, time);
 
         QString icon = type == "CREDIT ALERT" ? "⭐ " : "📬 ";
-        QString display = icon + info + "\n" + time;
+        QString display = icon + info + "\n" + date + " " + time;
 
         auto *item = new QListWidgetItem(display);
         if (type == "CREDIT ALERT")
             item->setForeground(QColor("#d97706"));
         inboxList->addItem(item);
-        count++;
     }
 
-    if (count == 0)
+    if (inboxList->count() == 0)
     {
         inboxList->addItem("Your inbox is empty.");
     }
-
-    adjustListHeight(inboxList, count, 58);
-    inboxList->setUpdatesEnabled(true);
 }
 
 // ═══════════════════════════════════════════════

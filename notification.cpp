@@ -1,4 +1,5 @@
 #include "notification.h"
+#include "modification.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
@@ -119,9 +120,13 @@ void Notification::extractAlerts(QString sid, QSqlDatabase &db)
     {
         while (query.next())
         {
-            QString message    = query.value("Info").toString();
-            QString ReceivedAt = query.value("ReceivedAt").toString();
-            qDebug() << "Received At:" << ReceivedAt << "| message:" << message;
+            QString message       = query.value("Info").toString();
+            QString rawReceivedAt = query.value("ReceivedAt").toString();
+
+            QString date, time;
+            formatTime(rawReceivedAt, date, time);
+
+            qDebug() << "Received At:" << date << time << "| message:" << message;
         }
     }
     else
