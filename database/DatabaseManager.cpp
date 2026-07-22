@@ -29,7 +29,7 @@ bool DatabaseManager::connect()
         "SERVER=scholarsync.database.windows.net,1433;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
-        "PWD=;"
+        "PWD=secretpassword123#;"
         "Encrypt=yes;"
         "TrustServerCertificate=yes;"
         "Connection Timeout=30;";

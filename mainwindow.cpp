@@ -11,8 +11,7 @@
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -20,10 +19,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_teacherLoginPage = new TeacherLogin(this);
     m_forgotPasswordPage = new ForgotPasswordPage(this);
 
-    ui->stackedWidget->addWidget(m_studentLoginPage); 
+    ui->stackedWidget->addWidget(m_studentLoginPage);
 
-    ui->stackedWidget->addWidget(m_teacherLoginPage); 
-    ui->stackedWidget->addWidget(m_forgotPasswordPage); 
+    ui->stackedWidget->addWidget(m_teacherLoginPage);
+    ui->stackedWidget->addWidget(m_forgotPasswordPage);
 
     ui->stackedWidget->setCurrentIndex(PageRoleSelect);
 
@@ -63,7 +62,7 @@ void MainWindow::setupConnections()
             this, &MainWindow::onStudentRegisterRequested);
     connect(m_teacherLoginPage, &TeacherLogin::registerRequested,
             this, &MainWindow::onTeacherRegisterRequested);
-                // Forgot password
+    // Forgot password
     connect(m_studentLoginPage, &StudentLogin::forgotPasswordRequested,
             this, &MainWindow::onForgotPasswordRequested);
     connect(m_teacherLoginPage, &TeacherLogin::forgotPasswordRequested,
@@ -72,6 +71,16 @@ void MainWindow::setupConnections()
             this, &MainWindow::onBackToRoleSelect);
     connect(m_forgotPasswordPage, &ForgotPasswordPage::passwordResetSuccess,
             this, &MainWindow::onPasswordResetSuccess);
+}
+
+void MainWindow::goToStudentLogin()
+{
+    ui->stackedWidget->setCurrentIndex(PageStudentLogin);
+}
+
+void MainWindow::goToTeacherLogin()
+{
+    ui->stackedWidget->setCurrentIndex(PageTeacherLogin);
 }
 
 void MainWindow::onStudentRoleSelected()
@@ -91,20 +100,22 @@ void MainWindow::onBackToRoleSelect()
 
 void MainWindow::handleStudentLoginAttempt(const QString &email, const QString &password)
 {
-    if (email.isEmpty() || password.isEmpty()) {
+    if (email.isEmpty() || password.isEmpty())
+    {
         QMessageBox::warning(this, "Login Failed",
                              "Please enter both email and password.");
         return;
     }
 
-    if (AuthManager::loginStudent(email, password)) {
+    if (AuthManager::loginStudent(email, password))
+    {
         // Fetch SID and name for session
         auto q = DatabaseManager::instance().prepareAndExecute(
             "SELECT SID, Name FROM StudentDetails WHERE Email = ?",
-            {email}
-        );
-        if (q.next()) {
-            currentSID      = q.value(0).toInt();
+            {email});
+        if (q.next())
+        {
+            currentSID = q.value(0).toInt();
             currentUserName = q.value(1).toString();
         }
 
@@ -112,7 +123,9 @@ void MainWindow::handleStudentLoginAttempt(const QString &email, const QString &
         dashboard->setAttribute(Qt::WA_DeleteOnClose);
         dashboard->show();
         this->close();
-    } else {
+    }
+    else
+    {
         QMessageBox::warning(this, "Login Failed",
                              "Incorrect email or password.");
     }
@@ -120,20 +133,22 @@ void MainWindow::handleStudentLoginAttempt(const QString &email, const QString &
 
 void MainWindow::handleTeacherLoginAttempt(const QString &email, const QString &password)
 {
-    if (email.isEmpty() || password.isEmpty()) {
+    if (email.isEmpty() || password.isEmpty())
+    {
         QMessageBox::warning(this, "Login Failed",
                              "Please enter both email and password.");
         return;
     }
 
-    if (AuthManager::loginTeacher(email, password)) {
+    if (AuthManager::loginTeacher(email, password))
+    {
         // Fetch TID and name for session
         auto q = DatabaseManager::instance().prepareAndExecute(
             "SELECT TID, Name FROM TeacherDetails WHERE Email = ?",
-            {email}
-        );
-        if (q.next()) {
-            currentTID      = q.value(0).toInt();
+            {email});
+        if (q.next())
+        {
+            currentTID = q.value(0).toInt();
             currentUserName = q.value(1).toString();
         }
 
@@ -141,7 +156,9 @@ void MainWindow::handleTeacherLoginAttempt(const QString &email, const QString &
         dashboard->setAttribute(Qt::WA_DeleteOnClose);
         dashboard->show();
         this->close();
-    } else {
+    }
+    else
+    {
         QMessageBox::warning(this, "Login Failed",
                              "Incorrect email or password.");
     }
