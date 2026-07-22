@@ -231,7 +231,7 @@ TeacherDashboard::TeacherDashboard(QWidget *parent)
 
         MainWindow *mainWin = new MainWindow();
         mainWin->setAttribute(Qt::WA_DeleteOnClose);
-        mainWin->TeacherLogin();
+        mainWin->goToTeacherLogin();
         mainWin->show();
 
         close(); });

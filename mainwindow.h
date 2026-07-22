@@ -4,7 +4,10 @@
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+    class MainWindow;
+}
 QT_END_NAMESPACE
 
 class StudentLogin;
@@ -23,6 +26,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void goToStudentLogin();
+    void goToTeacherLogin();
 
 private slots:
     void onStudentRoleSelected();
@@ -35,20 +40,20 @@ private slots:
     void onStudentRegisterRequested();
     void onTeacherRegisterRequested();
 
-
 private:
-    enum StackIndex {
-        PageRoleSelect   = 0,
+    enum StackIndex
+    {
+        PageRoleSelect = 0,
         PageStudentLogin = 1,
         PageTeacherLogin = 2,
         PageForgotPassword = 3
     };
 
-    Ui::MainWindow    *ui;
-    StudentLogin      *m_studentLoginPage;
-    TeacherLogin      *m_teacherLoginPage;
+    Ui::MainWindow *ui;
+    StudentLogin *m_studentLoginPage;
+    TeacherLogin *m_teacherLoginPage;
 
-    ForgotPasswordPage  *m_forgotPasswordPage;
+    ForgotPasswordPage *m_forgotPasswordPage;
 
     void setupConnections();
 };

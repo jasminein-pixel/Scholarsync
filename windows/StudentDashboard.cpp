@@ -5,7 +5,7 @@
 #include "../student_login.h"
 #include <QDesktopServices>
 #include <QUrl>
-
+#include "../mainwindow.h"
 // ── Pull in session globals from mainwindow.h ──
 extern int currentSID;
 extern QString currentUserName;
@@ -13,10 +13,12 @@ extern QString currentUserName;
 // ═══════════════════════════════════════════════
 //  Style helpers
 // ═══════════════════════════════════════════════
-QString StudentDashboard::sidebarStyle() {
+QString StudentDashboard::sidebarStyle()
+{
     return "background-color: #1e3a8a; color: white;";
 }
-QString StudentDashboard::sidebarBtnStyle() {
+QString StudentDashboard::sidebarBtnStyle()
+{
     return R"(
         QPushButton {
             color: #bfcfef;
@@ -33,7 +35,8 @@ QString StudentDashboard::sidebarBtnStyle() {
         }
     )";
 }
-QString StudentDashboard::sidebarBtnActiveStyle() {
+QString StudentDashboard::sidebarBtnActiveStyle()
+{
     return R"(
         QPushButton {
             color: white;
@@ -46,7 +49,8 @@ QString StudentDashboard::sidebarBtnActiveStyle() {
         }
     )";
 }
-QString StudentDashboard::tableStyle() {
+QString StudentDashboard::tableStyle()
+{
     return R"(
         QTableWidget {
             background: white;
@@ -72,7 +76,8 @@ QString StudentDashboard::tableStyle() {
         }
     )";
 }
-QString StudentDashboard::inputStyle() {
+QString StudentDashboard::inputStyle()
+{
     return R"(
         QLineEdit, QSpinBox, QComboBox {
             border: 1.5px solid #cbd5e1;
@@ -88,7 +93,8 @@ QString StudentDashboard::inputStyle() {
         }
     )";
 }
-QString StudentDashboard::primaryBtnStyle() {
+QString StudentDashboard::primaryBtnStyle()
+{
     return R"(
         QPushButton {
             background-color: #1d4ed8;
@@ -102,7 +108,8 @@ QString StudentDashboard::primaryBtnStyle() {
         QPushButton:hover { background-color: #1e40af; }
     )";
 }
-QString StudentDashboard::dangerBtnStyle() {
+QString StudentDashboard::dangerBtnStyle()
+{
     return R"(
         QPushButton {
             background-color: #ef4444;
@@ -120,7 +127,8 @@ QString StudentDashboard::dangerBtnStyle() {
 // ═══════════════════════════════════════════════
 //  Sidebar button helpers
 // ═══════════════════════════════════════════════
-QPushButton* StudentDashboard::sidebarBtn(const QString &text) {
+QPushButton *StudentDashboard::sidebarBtn(const QString &text)
+{
     auto *btn = new QPushButton(text);
     btn->setStyleSheet(sidebarBtnStyle());
     btn->setCursor(Qt::PointingHandCursor);
@@ -128,8 +136,10 @@ QPushButton* StudentDashboard::sidebarBtn(const QString &text) {
     return btn;
 }
 
-void StudentDashboard::activateBtn(QPushButton *btn) {
-    if (activeBtn) activeBtn->setStyleSheet(sidebarBtnStyle());
+void StudentDashboard::activateBtn(QPushButton *btn)
+{
+    if (activeBtn)
+        activeBtn->setStyleSheet(sidebarBtnStyle());
     activeBtn = btn;
     btn->setStyleSheet(sidebarBtnActiveStyle());
 }
@@ -179,12 +189,12 @@ StudentDashboard::StudentDashboard(QWidget *parent)
     sideLayout->addWidget(navLabel);
 
     // Nav buttons
-    btnSkills    = sidebarBtn("My Skills");
+    btnSkills = sidebarBtn("My Skills");
     btnInterests = sidebarBtn("My Interests");
-    btnBrowse    = sidebarBtn("Browse Projects");
-    btnCV        = sidebarBtn("Upload CV");
+    btnBrowse = sidebarBtn("Browse Projects");
+    btnCV = sidebarBtn("Upload CV");
     btnRecommend = sidebarBtn("Recommendations");
-    btnInbox     = sidebarBtn("Inbox");
+    btnInbox = sidebarBtn("Inbox");
 
     for (auto *b : {btnSkills, btnInterests, btnBrowse, btnCV, btnRecommend, btnInbox})
         sideLayout->addWidget(b);
@@ -200,62 +210,60 @@ StudentDashboard::StudentDashboard(QWidget *parent)
     sideLayout->addWidget(btnLogout);
 
     connect(btnLogout, &QPushButton::clicked, this, [this]()
-    {
+            {
         // Clear student session
         currentSID = -1;
         currentUserName.clear();
 
-        StudentLogin *login = new StudentLogin();
-        login->clearFields();
-        login->show();
+        MainWindow *mainWin = new MainWindow();
+        mainWin->setAttribute(Qt::WA_DeleteOnClose);
+        mainWin->goToStudentLogin();
+        mainWin->show();
 
-        close();
-    });
-
-
+        close(); });
 
     // ── Content stack ──
     stack = new QStackedWidget();
-    stack->addWidget(buildSkillsScreen());       // 0
-    stack->addWidget(buildInterestsScreen());    // 1
-    stack->addWidget(buildBrowseScreen());       // 2
-    stack->addWidget(buildCVScreen());           // 3
-    stack->addWidget(buildRecommendScreen());    // 4
-    stack->addWidget(buildInboxScreen());        // 5
+    stack->addWidget(buildSkillsScreen());    // 0
+    stack->addWidget(buildInterestsScreen()); // 1
+    stack->addWidget(buildBrowseScreen());    // 2
+    stack->addWidget(buildCVScreen());        // 3
+    stack->addWidget(buildRecommendScreen()); // 4
+    stack->addWidget(buildInboxScreen());     // 5
 
     root->addWidget(sidebar);
     root->addWidget(stack);
 
     // ── Wire sidebar buttons ──
-    connect(btnSkills, &QPushButton::clicked, this, [this]{
+    connect(btnSkills, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnSkills);
         stack->setCurrentIndex(0);
-        loadSkills();
-    });
-    connect(btnInterests, &QPushButton::clicked, this, [this]{
+        loadSkills(); });
+    connect(btnInterests, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnInterests);
         stack->setCurrentIndex(1);
-        loadInterests();
-    });
-    connect(btnBrowse, &QPushButton::clicked, this, [this]{
+        loadInterests(); });
+    connect(btnBrowse, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnBrowse);
         stack->setCurrentIndex(2);
-        loadProjects();
-    });
-    connect(btnCV, &QPushButton::clicked, this, [this]{
+        loadProjects(); });
+    connect(btnCV, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnCV);
-        stack->setCurrentIndex(3);
-    });
-    connect(btnRecommend, &QPushButton::clicked, this, [this]{
+        stack->setCurrentIndex(3); });
+    connect(btnRecommend, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnRecommend);
         stack->setCurrentIndex(4);
-        loadRecommendations();
-    });
-    connect(btnInbox, &QPushButton::clicked, this, [this]{
+        loadRecommendations(); });
+    connect(btnInbox, &QPushButton::clicked, this, [this]
+            {
         activateBtn(btnInbox);
         stack->setCurrentIndex(5);
-        loadInbox();
-    });
+        loadInbox(); });
 
     // Default screen
     activateBtn(btnSkills);
@@ -269,7 +277,8 @@ StudentDashboard::~StudentDashboard() {}
 // ═══════════════════════════════════════════════
 
 // ── Helper: screen title ──
-static QLabel* screenTitle(const QString &text) {
+static QLabel *screenTitle(const QString &text)
+{
     auto *lbl = new QLabel(text);
     lbl->setStyleSheet(
         "font-size: 20px; font-weight: 700; color: #0f172a; "
@@ -277,7 +286,8 @@ static QLabel* screenTitle(const QString &text) {
     return lbl;
 }
 
-static QLabel* screenSub(const QString &text) {
+static QLabel *screenSub(const QString &text)
+{
     auto *lbl = new QLabel(text);
     lbl->setStyleSheet(
         "font-size: 13px; color: #64748b; background: transparent; margin-bottom: 16px;");
@@ -287,7 +297,7 @@ static QLabel* screenSub(const QString &text) {
 // ══════════════
 //  SKILLS SCREEN
 // ══════════════
-QWidget* StudentDashboard::buildSkillsScreen()
+QWidget *StudentDashboard::buildSkillsScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -340,7 +350,7 @@ QWidget* StudentDashboard::buildSkillsScreen()
 // ══════════════════
 //  INTERESTS SCREEN
 // ══════════════════
-QWidget* StudentDashboard::buildInterestsScreen()
+QWidget *StudentDashboard::buildInterestsScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -401,7 +411,7 @@ QWidget* StudentDashboard::buildInterestsScreen()
 // ═════════════════════
 //  BROWSE PROJECTS SCREEN
 // ═════════════════════
-QWidget* StudentDashboard::buildBrowseScreen()
+QWidget *StudentDashboard::buildBrowseScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -422,8 +432,7 @@ QWidget* StudentDashboard::buildBrowseScreen()
     layout->addLayout(topRow);
 
     projectsTable = new QTableWidget(0, 6);
-    projectsTable->setHorizontalHeaderLabels({
-        "Project Name", "Department", "Duration", "Spots", "Preference", "Action"});
+    projectsTable->setHorizontalHeaderLabels({"Project Name", "Department", "Duration", "Spots", "Preference", "Action"});
     projectsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     projectsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     projectsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
@@ -442,7 +451,7 @@ QWidget* StudentDashboard::buildBrowseScreen()
 // ═══════════════
 //  CV SCREEN
 // ═══════════════
-QWidget* StudentDashboard::buildCVScreen()
+QWidget *StudentDashboard::buildCVScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -509,7 +518,7 @@ QWidget* StudentDashboard::buildCVScreen()
 // ══════════════════════
 //  RECOMMENDATIONS SCREEN
 // ══════════════════════
-QWidget* StudentDashboard::buildRecommendScreen()
+QWidget *StudentDashboard::buildRecommendScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -532,8 +541,7 @@ QWidget* StudentDashboard::buildRecommendScreen()
     layout->addLayout(topRow);
 
     recommendTable = new QTableWidget(0, 4);
-    recommendTable->setHorizontalHeaderLabels({
-        "Project Name", "Department", "Match Score", "Action"});
+    recommendTable->setHorizontalHeaderLabels({"Project Name", "Department", "Match Score", "Action"});
     recommendTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     recommendTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     recommendTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
@@ -550,7 +558,7 @@ QWidget* StudentDashboard::buildRecommendScreen()
 // ═══════════════
 //  INBOX SCREEN
 // ═══════════════
-QWidget* StudentDashboard::buildInboxScreen()
+QWidget *StudentDashboard::buildInboxScreen()
 {
     auto *w = new QWidget();
     w->setStyleSheet("background: #f8fafc;");
@@ -603,37 +611,40 @@ void StudentDashboard::loadSkills()
 {
     skillsTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     auto q = db.prepareAndExecute(
         "SELECT SkillName, Proficiency FROM SkillList WHERE SID = ?",
         {currentSID});
 
     int row = 0;
-    while (q.next()) {
+    while (q.next())
+    {
         skillsTable->insertRow(row);
         skillsTable->setItem(row, 0,
-            new QTableWidgetItem(q.value(0).toString()));
+                             new QTableWidgetItem(q.value(0).toString()));
         skillsTable->setItem(row, 1,
-            new QTableWidgetItem(q.value(1).toString()));
+                             new QTableWidgetItem(q.value(1).toString()));
 
         // Delete button
         auto *delBtn = new QPushButton("Remove");
         delBtn->setStyleSheet(dangerBtnStyle());
         delBtn->setCursor(Qt::PointingHandCursor);
         QString skillName = q.value(0).toString();
-        connect(delBtn, &QPushButton::clicked, this, [this, skillName]{
+        connect(delBtn, &QPushButton::clicked, this, [this, skillName]
+                {
             auto &db = DatabaseManager::instance();
             db.prepareAndExecute(
                 "DELETE FROM SkillList WHERE SID = ? AND SkillName = ?",
                 {currentSID, skillName});
-            loadSkills();
-        });
+            loadSkills(); });
         skillsTable->setCellWidget(row, 2, delBtn);
         row++;
     }
 
-    if (row == 0) {
+    if (row == 0)
+    {
         skillsTable->insertRow(0);
         auto *empty = new QTableWidgetItem("No skills added yet. Add one below!");
         empty->setForeground(QColor("#94a3b8"));
@@ -644,21 +655,24 @@ void StudentDashboard::loadSkills()
 void StudentDashboard::addSkill()
 {
     QString name = skillNameInput->text().trimmed();
-    if (name.isEmpty()) {
+    if (name.isEmpty())
+    {
         QMessageBox::warning(this, "Missing", "Please enter a skill name.");
         return;
     }
     int prof = skillProfInput->value();
 
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     // Check duplicate
     auto check = db.prepareAndExecute(
         "SELECT COUNT(*) FROM SkillList WHERE SID = ? AND SkillName = ?",
         {currentSID, name});
     check.next();
-    if (check.value(0).toInt() > 0) {
+    if (check.value(0).toInt() > 0)
+    {
         QMessageBox::warning(this, "Duplicate", "You already have this skill.");
         return;
     }
@@ -675,7 +689,8 @@ void StudentDashboard::addSkill()
 void StudentDashboard::deleteSkill()
 {
     int row = skillsTable->currentRow();
-    if (row < 0) {
+    if (row < 0)
+    {
         QMessageBox::warning(this, "Select", "Please select a skill to remove.");
         return;
     }
@@ -691,15 +706,18 @@ void StudentDashboard::loadInterests()
 {
     interestsList->clear();
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     auto q = db.prepareAndExecute(
         "SELECT Preference FROM StudentDetails WHERE SID = ?",
         {currentSID});
 
-    if (q.next()) {
+    if (q.next())
+    {
         QString prefs = q.value(0).toString();
-        if (!prefs.isEmpty()) {
+        if (!prefs.isEmpty())
+        {
             QStringList items = prefs.split(",", Qt::SkipEmptyParts);
             for (auto &item : items)
                 interestsList->addItem(item.trimmed());
@@ -710,16 +728,19 @@ void StudentDashboard::loadInterests()
 void StudentDashboard::addInterest()
 {
     QString interest = interestInput->text().trimmed();
-    if (interest.isEmpty()) return;
+    if (interest.isEmpty())
+        return;
 
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     // Get current preferences
     auto q = db.prepareAndExecute(
         "SELECT Preference FROM StudentDetails WHERE SID = ?", {currentSID});
     QString current = "";
-    if (q.next()) current = q.value(0).toString();
+    if (q.next())
+        current = q.value(0).toString();
 
     QString updated = current.isEmpty() ? interest : current + ", " + interest;
 
@@ -734,7 +755,8 @@ void StudentDashboard::addInterest()
 void StudentDashboard::deleteInterest()
 {
     QListWidgetItem *item = interestsList->currentItem();
-    if (!item) {
+    if (!item)
+    {
         QMessageBox::warning(this, "Select", "Please select an interest to remove.");
         return;
     }
@@ -743,12 +765,12 @@ void StudentDashboard::deleteInterest()
     auto &db = DatabaseManager::instance();
     auto q = db.prepareAndExecute(
         "SELECT Preference FROM StudentDetails WHERE SID = ?", {currentSID});
-    if (q.next()) {
+    if (q.next())
+    {
         QString current = q.value(0).toString();
         QStringList items = current.split(",", Qt::SkipEmptyParts);
-        items.removeIf([&](const QString &s){
-            return s.trimmed().toLower() == toRemove.toLower();
-        });
+        items.removeIf([&](const QString &s)
+                       { return s.trimmed().toLower() == toRemove.toLower(); });
         QString updated = items.join(", ");
         db.prepareAndExecute(
             "UPDATE StudentDetails SET Preference = ? WHERE SID = ?",
@@ -761,14 +783,16 @@ void StudentDashboard::loadProjects()
 {
     projectsTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     auto q = db.executeQuery(
         "SELECT PID, ProjectName, department, expectedDuration, vacantSpot, preference "
         "FROM ProjectDetails WHERE status = 'Active' AND vacantSpot > 0");
 
     int row = 0;
-    while (q.next()) {
+    while (q.next())
+    {
         projectsTable->insertRow(row);
         int pid = q.value(0).toInt();
         projectsTable->setItem(row, 0, new QTableWidgetItem(q.value(1).toString()));
@@ -781,7 +805,8 @@ void StudentDashboard::loadProjects()
         auto *applyBtn = new QPushButton("Apply");
         applyBtn->setStyleSheet(primaryBtnStyle());
         applyBtn->setCursor(Qt::PointingHandCursor);
-        connect(applyBtn, &QPushButton::clicked, this, [this, pid]{
+        connect(applyBtn, &QPushButton::clicked, this, [this, pid]
+                {
             auto &db = DatabaseManager::instance();
 
             // Check if already applied
@@ -802,13 +827,13 @@ void StudentDashboard::loadProjects()
 
             QMessageBox::information(this, "Applied!",
                 "Your application has been submitted successfully.");
-            loadProjects();
-        });
+            loadProjects(); });
         projectsTable->setCellWidget(row, 5, applyBtn);
         row++;
     }
 
-    if (row == 0) {
+    if (row == 0)
+    {
         projectsTable->insertRow(0);
         auto *empty = new QTableWidgetItem("No active projects available right now.");
         empty->setForeground(QColor("#94a3b8"));
@@ -819,22 +844,26 @@ void StudentDashboard::loadProjects()
 void StudentDashboard::uploadCV()
 {
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
-    QSqlDatabase database = db.database();  // store in local variable first
+    QSqlDatabase database = db.database(); // store in local variable first
 
     File f;
     bool result = f.uploadCV(
         QString::number(currentSID),
         currentUserName,
-        database    // pass the local variable, not a temporary
+        database // pass the local variable, not a temporary
     );
 
-    if (result) {
+    if (result)
+    {
         cvStatusLabel->setStyleSheet(
             "font-size: 13px; color: #16a34a; border: none; background: transparent;");
         cvStatusLabel->setText("CV uploaded successfully!");
-    } else {
+    }
+    else
+    {
         cvStatusLabel->setStyleSheet(
             "font-size: 13px; color: #dc2626; border: none; background: transparent;");
         cvStatusLabel->setText("Upload cancelled or failed.");
@@ -845,7 +874,8 @@ void StudentDashboard::loadRecommendations()
 {
     recommendTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     // Get student skills
     auto skillQ = db.prepareAndExecute(
@@ -862,7 +892,8 @@ void StudentDashboard::loadRecommendations()
     QVector<QPair<int, QString>> scored; // {score, row data}
     QVector<QStringList> rows;
 
-    while (projQ.next()) {
+    while (projQ.next())
+    {
         int pid = projQ.value(0).toInt();
         QString name = projQ.value(1).toString();
         QString dept = projQ.value(2).toString();
@@ -871,10 +902,12 @@ void StudentDashboard::loadRecommendations()
         auto reqQ = db.prepareAndExecute(
             "SELECT skillName FROM skillRequirement WHERE PID = ?", {pid});
         int matches = 0, total = 0;
-        while (reqQ.next()) {
+        while (reqQ.next())
+        {
             total++;
             QString req = reqQ.value(0).toString().toLower();
-            if (studentSkills.contains(req)) matches++;
+            if (studentSkills.contains(req))
+                matches++;
         }
 
         int score = total > 0 ? (matches * 100 / total) : 0;
@@ -885,11 +918,11 @@ void StudentDashboard::loadRecommendations()
     // Sort by score descending
     QVector<int> indices(rows.size());
     std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [&](int a, int b){
-        return scored[a].first > scored[b].first;
-    });
+    std::sort(indices.begin(), indices.end(), [&](int a, int b)
+              { return scored[a].first > scored[b].first; });
 
-    for (int i : indices) {
+    for (int i : indices)
+    {
         int row = recommendTable->rowCount();
         recommendTable->insertRow(row);
         recommendTable->setItem(row, 0, new QTableWidgetItem(rows[i][0]));
@@ -912,7 +945,8 @@ void StudentDashboard::loadRecommendations()
         auto *applyBtn = new QPushButton("Apply");
         applyBtn->setStyleSheet(primaryBtnStyle());
         applyBtn->setCursor(Qt::PointingHandCursor);
-        connect(applyBtn, &QPushButton::clicked, this, [this, pid]{
+        connect(applyBtn, &QPushButton::clicked, this, [this, pid]
+                {
             auto &db = DatabaseManager::instance();
             auto check = db.prepareAndExecute(
                 "SELECT COUNT(*) FROM Applications WHERE SID = ? AND PID = ?",
@@ -928,12 +962,12 @@ void StudentDashboard::loadRecommendations()
                 "VALUES (?, ?, 'reviewing', 0, 'Application submitted via ScholarSync')",
                 {currentSID, pid});
             QMessageBox::information(this, "Applied!",
-                "Your application has been submitted.");
-        });
+                "Your application has been submitted."); });
         recommendTable->setCellWidget(row, 3, applyBtn);
     }
 
-    if (recommendTable->rowCount() == 0) {
+    if (recommendTable->rowCount() == 0)
+    {
         recommendTable->insertRow(0);
         auto *empty = new QTableWidgetItem(
             "No recommendations yet. Add skills to get matched!");
@@ -946,14 +980,16 @@ void StudentDashboard::loadInbox()
 {
     inboxList->clear();
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected()) db.connect();
+    if (!db.isConnected())
+        db.connect();
 
     auto q = db.prepareAndExecute(
         "SELECT Info, Type, ReceivedAt FROM StudentInbox "
         "WHERE SID = ? ORDER BY ReceivedAt DESC",
         {currentSID});
 
-    while (q.next()) {
+    while (q.next())
+    {
         QString info = q.value(0).toString();
         QString type = q.value(1).toString();
         QString time = q.value(2).toString();
@@ -967,12 +1003,14 @@ void StudentDashboard::loadInbox()
         inboxList->addItem(item);
     }
 
-    if (inboxList->count() == 0) {
+    if (inboxList->count() == 0)
+    {
         inboxList->addItem("Your inbox is empty.");
     }
 }
 
-QWidget* StudentDashboard::makePlaceholder(const QString &text) {
+QWidget *StudentDashboard::makePlaceholder(const QString &text)
+{
     auto *w = new QWidget();
     auto *l = new QVBoxLayout(w);
     auto *lbl = new QLabel(text);
