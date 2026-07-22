@@ -1,10 +1,12 @@
 #include "TeacherDashboard.h"
 #include "../database/DatabaseManager.h"
 #include "../notification.h"
+#include "../teacher_login.h"
 #include <QDesktopServices>
 #include <QUrl>
 #include <numeric>
 #include <algorithm>
+
 
 extern int currentTID;
 extern QString currentUserName;
@@ -200,6 +202,27 @@ TeacherDashboard::TeacherDashboard(QWidget *parent)
     sideLayout->addWidget(btnPost);
     sideLayout->addWidget(btnApplicants);
     sideLayout->addStretch();
+
+        // Logout button
+    auto *btnLogout = new QPushButton("Logout");
+    btnLogout->setStyleSheet(dangerBtnStyle());
+    btnLogout->setCursor(Qt::PointingHandCursor);
+    btnLogout->setMinimumHeight(44);
+
+    sideLayout->addWidget(btnLogout);
+
+    connect(btnLogout, &QPushButton::clicked, this, [this]()
+    {
+        // Clear teacher session
+        currentTID = -1;
+        currentUserName.clear();
+
+        TeacherLogin *login = new TeacherLogin();
+        login->clearFields();
+        login->show();
+
+        close();
+    });
 
     // ── Content stack ──
     stack = new QStackedWidget();

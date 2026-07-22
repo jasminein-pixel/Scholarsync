@@ -23,10 +23,13 @@ signals:
     void backRequested();
     void loginAttempted(const QString &email, const QString &password);
     void registerRequested();
+    void forgotPasswordRequested();
+
 
 private slots:
     void onBackClicked();
     void onLoginClicked();
+    void onForgotPasswordClicked();
     void onRegisterClicked();
     void onTogglePasswordVisibility();
 
@@ -35,3 +38,4 @@ private:
 };
 
 #endif // STUDENT_LOGIN_H
+

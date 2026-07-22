@@ -2,6 +2,7 @@
 #include "../database/DatabaseManager.h"
 #include "../fileupload.h"
 #include "../notification.h"
+#include "../student_login.h"
 #include <QDesktopServices>
 #include <QUrl>
 #include <QPainter>
@@ -348,6 +349,29 @@ StudentDashboard::StudentDashboard(QWidget *parent)
         sideLayout->addWidget(b);
 
     sideLayout->addStretch();
+
+    // Logout button
+    auto *btnLogout = new QPushButton("Logout");
+    btnLogout->setStyleSheet(dangerBtnStyle());
+    btnLogout->setCursor(Qt::PointingHandCursor);
+    btnLogout->setMinimumHeight(44);
+
+    sideLayout->addWidget(btnLogout);
+
+    connect(btnLogout, &QPushButton::clicked, this, [this]()
+    {
+        // Clear student session
+        currentSID = -1;
+        currentUserName.clear();
+
+        StudentLogin *login = new StudentLogin();
+        login->clearFields();
+        login->show();
+
+        close();
+    });
+
+
 
     // ── Content stack ──
     stack = new QStackedWidget();

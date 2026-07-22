@@ -16,7 +16,7 @@ public:
     static QString hashPassword(const QString &password,
                                 const QString &salt);
 
-    static bool verifyPassword(const QString &password,
+    static bool verifyPassword(const QString &password,   
                                const QString &storedHash,
                                const QString &salt);
 
@@ -36,14 +36,13 @@ public:
                                 const QString &securityAnswer1,
                                 const QString &securityAnswer2,
                                 const QString &securityAnswer3);
-
     static bool loginStudent(const QString &email,
                              const QString &password);
 
     // ----------------------------
     // Teacher Authentication
     // ----------------------------
-
+    
     static bool registerTeacher(const QString &name,
                                 const QString &email,
                                 const QString &password,
@@ -53,9 +52,24 @@ public:
                                 const QString &securityAnswer1,
                                 const QString &securityAnswer2,
                                 const QString &securityAnswer3);
-
     static bool loginTeacher(const QString &email,
                              const QString &password);
+
+
+    // ----------------------------
+    // Forgot Password
+    // ----------------------------
+    static bool emailExists(const QString &email,
+                            bool isStudent);
+
+    static bool updatePassword(const QString &email,
+                               const QString &newPassword,
+                               bool isStudent);
+    static bool verifySecurityAnswers(const QString &email,
+                                      const QString &answer1,
+                                      const QString &answer2,
+                                      const QString &answer3,
+                                      bool isStudent);
 };
 
 #endif // AUTHMANAGER_H
