@@ -748,7 +748,7 @@ QWidget *StudentDashboard::buildBrowseScreen()
     auto *topRow = new QHBoxLayout();
     topRow->setContentsMargins(0, 0, 0, 0);
     topRow->setSpacing(0);
-    auto *refreshBtn = new QPushButton("🔄  Refresh");
+    auto *refreshBtn = new QPushButton("Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
     refreshBtn->setCursor(Qt::PointingHandCursor);
     connect(refreshBtn, &QPushButton::clicked, this, &StudentDashboard::loadProjects);
@@ -896,7 +896,7 @@ QWidget *StudentDashboard::buildInboxScreen()
     auto *topRow = new QHBoxLayout();
     topRow->setContentsMargins(0, 0, 0, 0); // fixes the downward shift vs Skills/Interests
     topRow->setSpacing(0);
-    auto *refreshBtn = new QPushButton("🔄  Refresh");
+    auto *refreshBtn = new QPushButton("Refresh");
     refreshBtn->setStyleSheet(primaryBtnStyle());
     refreshBtn->setCursor(Qt::PointingHandCursor);
     connect(refreshBtn, &QPushButton::clicked, this, &StudentDashboard::loadInbox);
@@ -1551,7 +1551,7 @@ void StudentDashboard::loadInbox()
         QString date, time;
         formatTime(rawTime, date, time);
 
-        QString icon = type == "CREDIT ALERT" ? "⭐ " : "📬 ";
+        QString icon = type == "CREDIT ALERT" ? "✪" : "● ";
         QString display = icon + info + "\n" + date + " " + time;
 
         auto *item = new QListWidgetItem(display);
