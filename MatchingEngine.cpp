@@ -1,399 +1,303 @@
-#include <nanodbc/nanodbc.h>
-#include <rapidfuzz-cpp/rapidfuzz/fuzz.hpp>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <algorithm>
+#include "MatchingEngine.h"
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 #include <cmath>
 
-using namespace std;
-
 // ─────────────────────────────────────────
-//  MATCHING ENGINE CLASS
+//  Constructor — load synonym + category maps
 // ─────────────────────────────────────────
-class MatchingEngine {
-private:
-    unordered_map<string, string> synonymMap;
-    unordered_map<string, string> categoryMap;
+MatchingEngine::MatchingEngine()
+{
+    // SYNONYM MAP — abbreviations to full form
+    synonymMap["ml"]     = "machine learning";
+    synonymMap["ai"]     = "artificial intelligence";
+    synonymMap["dl"]     = "deep learning";
+    synonymMap["nlp"]    = "natural language processing";
+    synonymMap["cv"]     = "computer vision";
+    synonymMap["oop"]    = "object oriented programming";
+    synonymMap["dsa"]    = "data structures and algorithms";
+    synonymMap["db"]     = "database";
+    synonymMap["os"]     = "operating systems";
+    synonymMap["js"]     = "javascript";
+    synonymMap["ts"]     = "typescript";
+    synonymMap["cpp"]    = "c++";
+    synonymMap["ui"]     = "user interface design";
+    synonymMap["ux"]     = "user experience design";
+    synonymMap["se"]     = "software engineering";
+    synonymMap["devops"] = "development operations";
+    synonymMap["ce"]     = "computer engineering";
 
-    // ── Normalize: lowercase + expand abbreviations ──
-    string normalize(string skill) {
-        // convert to lowercase
-        transform(skill.begin(), skill.end(), skill.begin(), ::tolower);
-        // trim whitespace
-        skill.erase(0, skill.find_first_not_of(" "));
-        skill.erase(skill.find_last_not_of(" ") + 1);
-        // expand abbreviation if found
-        if (synonymMap.count(skill))
-            return synonymMap[skill];
-        return skill;
-    }
+    // CATEGORY MAP — related skills → same domain
+    // AI/ML
+    categoryMap["machine learning"]             = "AI";
+    categoryMap["artificial intelligence"]      = "AI";
+    categoryMap["deep learning"]                = "AI";
+    categoryMap["neural networks"]              = "AI";
+    categoryMap["natural language processing"]  = "AI";
+    categoryMap["computer vision"]              = "AI";
+    categoryMap["data science"]                 = "AI";
+    categoryMap["data analysis"]                = "AI";
+    categoryMap["reinforcement learning"]       = "AI";
+    categoryMap["generative ai"]                = "AI";
 
-    // ── Semantic score between two normalized skills ──
-    float semanticScore(string a, string b) {
-        a = normalize(a);
-        b = normalize(b);
+    // Web
+    categoryMap["web development"]  = "Web";
+    categoryMap["frontend"]         = "Web";
+    categoryMap["backend"]          = "Web";
+    categoryMap["fullstack"]        = "Web";
+    categoryMap["javascript"]       = "Web";
+    categoryMap["typescript"]       = "Web";
+    categoryMap["react"]            = "Web";
+    categoryMap["nodejs"]           = "Web";
+    categoryMap["html"]             = "Web";
+    categoryMap["css"]              = "Web";
+    categoryMap["django"]           = "Web";
+    categoryMap["flask"]            = "Web";
 
-        // Layer 1: exact match
-        if (a == b) return 1.0f;
+    // Systems
+    categoryMap["operating systems"]     = "Systems";
+    categoryMap["linux"]                 = "Systems";
+    categoryMap["networking"]            = "Systems";
+    categoryMap["cybersecurity"]         = "Systems";
+    categoryMap["embedded systems"]      = "Systems";
+    categoryMap["computer architecture"] = "Systems";
+    categoryMap["distributed systems"]   = "Systems";
+    categoryMap["embedded system designing"] = "Systems";
 
-        // Layer 2: same category
-        if (categoryMap.count(a) && categoryMap.count(b))
-            if (categoryMap[a] == categoryMap[b])
-                return 0.70f;
+    // Database
+    categoryMap["database"]        = "Database";
+    categoryMap["sql"]             = "Database";
+    categoryMap["mysql"]           = "Database";
+    categoryMap["mongodb"]         = "Database";
+    categoryMap["postgresql"]      = "Database";
+    categoryMap["database design"] = "Database";
 
-        // Layer 3: RapidFuzz fuzzy match
-        double fuzzy = rapidfuzz::fuzz::ratio(a, b);
-        if (fuzzy >= 80.0)
-            return (float)(fuzzy / 100.0);
+    // Software Engineering
+    categoryMap["object oriented programming"] = "SE";
+    categoryMap["software engineering"]        = "SE";
+    categoryMap["design patterns"]             = "SE";
+    categoryMap["agile"]                       = "SE";
+    categoryMap["development operations"]      = "SE";
+    categoryMap["git"]                         = "SE";
+    categoryMap["testing"]                     = "SE";
 
-        return 0.0f;
-    }
+    // Data languages
+    categoryMap["python"] = "DataLang";
+    categoryMap["r"]      = "DataLang";
+    categoryMap["julia"]  = "DataLang";
 
-    // ── Proficiency factor ──
-    float proficiencyFactor(int studentProf, int requiredProf) {
-        if (requiredProf == 0) return 1.0f;
-        if (studentProf >= requiredProf) return 1.0f;
-        return (float)studentProf / (float)requiredProf;
-    }
+    // Systems languages
+    categoryMap["c++"]  = "SysLang";
+    categoryMap["c"]    = "SysLang";
+    categoryMap["rust"] = "SysLang";
 
-public:
-    // ── Constructor: load synonym and category maps ──
-    MatchingEngine() {
+    // Mobile
+    categoryMap["android"]            = "Mobile";
+    categoryMap["ios"]                = "Mobile";
+    categoryMap["flutter"]            = "Mobile";
+    categoryMap["react native"]       = "Mobile";
+    categoryMap["mobile development"] = "Mobile";
 
-        // SYNONYM MAP — abbreviations to full form
-        synonymMap["ml"]   = "machine learning";
-        synonymMap["ai"]   = "artificial intelligence";
-        synonymMap["dl"]   = "deep learning";
-        synonymMap["nlp"]  = "natural language processing";
-        synonymMap["cv"]   = "computer vision";
-        synonymMap["oop"]  = "object oriented programming";
-        synonymMap["dsa"]  = "data structures and algorithms";
-        synonymMap["db"]   = "database";
-        synonymMap["os"]   = "operating systems";
-        synonymMap["js"]   = "javascript";
-        synonymMap["ts"]   = "typescript";
-        synonymMap["cpp"]  = "c++";
-        synonymMap["ui"]   = "user interface design";
-        synonymMap["ux"]   = "user experience design";
-        synonymMap["devops"] = "development operations";
-        synonymMap["se"]   = "software engineering";
-
-        // CATEGORY MAP — related skills grouped together
-        // AI / ML domain
-        categoryMap["machine learning"]          = "AI";
-        categoryMap["artificial intelligence"]   = "AI";
-        categoryMap["deep learning"]             = "AI";
-        categoryMap["neural networks"]           = "AI";
-        categoryMap["natural language processing"] = "AI";
-        categoryMap["computer vision"]           = "AI";
-        categoryMap["data science"]              = "AI";
-        categoryMap["data analysis"]             = "AI";
-        categoryMap["reinforcement learning"]    = "AI";
-        categoryMap["generative ai"]             = "AI";
-
-        // Web development domain
-        categoryMap["web development"]   = "Web";
-        categoryMap["frontend"]          = "Web";
-        categoryMap["backend"]           = "Web";
-        categoryMap["fullstack"]         = "Web";
-        categoryMap["javascript"]        = "Web";
-        categoryMap["typescript"]        = "Web";
-        categoryMap["react"]             = "Web";
-        categoryMap["nodejs"]            = "Web";
-        categoryMap["html"]              = "Web";
-        categoryMap["css"]               = "Web";
-        categoryMap["django"]            = "Web";
-        categoryMap["flask"]             = "Web";
-
-        // Systems domain
-        categoryMap["operating systems"]         = "Systems";
-        categoryMap["linux"]                     = "Systems";
-        categoryMap["networking"]                = "Systems";
-        categoryMap["cybersecurity"]             = "Systems";
-        categoryMap["embedded systems"]          = "Systems";
-        categoryMap["computer architecture"]     = "Systems";
-        categoryMap["distributed systems"]       = "Systems";
-
-        // Database domain
-        categoryMap["database"]          = "Database";
-        categoryMap["sql"]               = "Database";
-        categoryMap["mysql"]             = "Database";
-        categoryMap["mongodb"]           = "Database";
-        categoryMap["postgresql"]        = "Database";
-        categoryMap["database design"]   = "Database";
-
-        // Software Engineering domain
-        categoryMap["object oriented programming"] = "SE";
-        categoryMap["software engineering"]        = "SE";
-        categoryMap["design patterns"]             = "SE";
-        categoryMap["agile"]                       = "SE";
-        categoryMap["development operations"]      = "SE";
-        categoryMap["git"]                         = "SE";
-        categoryMap["testing"]                     = "SE";
-
-        // Data-focused languages
-        categoryMap["python"] = "DataLang";
-        categoryMap["r"]      = "DataLang";
-        categoryMap["julia"]  = "DataLang";
-
-        // Systems languages
-        categoryMap["c++"]  = "SysLang";
-        categoryMap["c"]    = "SysLang";
-        categoryMap["rust"] = "SysLang";
-
-        // Mobile domain
-        categoryMap["android"]        = "Mobile";
-        categoryMap["ios"]            = "Mobile";
-        categoryMap["flutter"]        = "Mobile";
-        categoryMap["react native"]   = "Mobile";
-        categoryMap["mobile development"] = "Mobile";
-
-        // Electrical / Engineering domain
-        categoryMap["embedded system designing"] = "EE";
-        categoryMap["circuit design"]            = "EE";
-        categoryMap["fpga"]                      = "EE";
-        categoryMap["microcontrollers"]          = "EE";
-        categoryMap["signal processing"]         = "EE";
-        categoryMap["power systems"]             = "EE";
-    }
-
-    // ─────────────────────────────────────────
-    //  CORE SCORE: Student vs Project
-    // ─────────────────────────────────────────
-    int calculateScore(int SID, int PID, nanodbc::connection& conn) {
-        try {
-            // ── Fetch student skills ──
-            vector<pair<string, int>> studentSkills;
-            string skillQuery =
-                "SELECT SkillName, Proficiency FROM SkillList WHERE SID = ?";
-            auto skillStmt = nanodbc::statement(conn, skillQuery);
-            skillStmt.bind(0, &SID);
-            auto skillResult = nanodbc::execute(skillStmt);
-            while (skillResult.next())
-                studentSkills.push_back({
-                    skillResult.get<string>(0),
-                    skillResult.get<int>(1)
-                });
-
-            // ── Fetch project requirements ──
-            vector<pair<string, int>> requirements;
-            string reqQuery =
-                "SELECT skillName, requiredProficiency FROM skillRequirement WHERE PID = ?";
-            auto reqStmt = nanodbc::statement(conn, reqQuery);
-            reqStmt.bind(0, &PID);
-            auto reqResult = nanodbc::execute(reqStmt);
-            while (reqResult.next())
-                requirements.push_back({
-                    reqResult.get<string>(0),
-                    reqResult.get<int>(1)
-                });
-
-            // ── Fetch student interests (from preference field) ──
-            vector<string> studentInterests;
-            string intQuery =
-                "SELECT Preference FROM StudentDetails WHERE SID = ?";
-            auto intStmt = nanodbc::statement(conn, intQuery);
-            intStmt.bind(0, &SID);
-            auto intResult = nanodbc::execute(intStmt);
-            if (intResult.next())
-                studentInterests.push_back(intResult.get<string>(0));
-
-            // ── Fetch project preference ──
-            string projectPref = "";
-            string prefQuery =
-                "SELECT preference, department FROM ProjectDetails WHERE PID = ?";
-            auto prefStmt = nanodbc::statement(conn, prefQuery);
-            prefStmt.bind(0, &PID);
-            auto prefResult = nanodbc::execute(prefStmt);
-            if (prefResult.next()) {
-                projectPref = prefResult.get<string>(0);
-            }
-
-            // ── If no requirements, return 0 ──
-            if (requirements.empty()) return 0;
-
-            // ── Calculate skill score ──
-            float totalSkillScore = 0.0f;
-            for (auto& [reqSkill, reqProf] : requirements) {
-                float bestContribution = 0.0f;
-                for (auto& [stuSkill, stuProf] : studentSkills) {
-                    float semantic  = semanticScore(stuSkill, reqSkill);
-                    float profFactor = proficiencyFactor(stuProf, reqProf);
-                    float contribution = semantic * profFactor;
-                    if (contribution > bestContribution)
-                        bestContribution = contribution;
-                }
-                totalSkillScore += bestContribution;
-            }
-            float avgSkillScore = totalSkillScore / requirements.size();
-
-            // ── Calculate interest score ──
-            float interestScore = 0.0f;
-            if (!studentInterests.empty() && !projectPref.empty()) {
-                float best = semanticScore(studentInterests[0], projectPref);
-                interestScore = best;
-            }
-
-            // ── Combine: 70% skills, 30% interests ──
-            float raw   = (avgSkillScore * 0.7f) + (interestScore * 0.3f);
-            int   final = max(1, (int)ceil(raw * 10));
-            return min(final, 10);  // cap at 10
-        }
-        catch (const nanodbc::database_error& e) {
-            cout << "MatchingEngine error: " << e.what() << "\n";
-            return 0;
-        }
-    }
-
-    // ─────────────────────────────────────────
-    //  STUDENT SIDE: Ranked projects for a student
-    // ─────────────────────────────────────────
-    vector<pair<int, int>> getRankedProjects(int SID, nanodbc::connection& conn) {
-        vector<pair<int, int>> results;  // {score, PID}
-        try {
-            // Get all active projects
-            string query = "SELECT PID FROM ProjectDetails WHERE status = 'Active'";
-            auto result = nanodbc::execute(conn, query);
-            while (result.next()) {
-                int PID   = result.get<int>(0);
-                int score = calculateScore(SID, PID, conn);
-                if (score > 0)
-                    results.push_back({score, PID});
-            }
-            // Sort descending by score
-            sort(results.begin(), results.end(),
-                [](auto& a, auto& b) { return a.first > b.first; });
-        }
-        catch (const nanodbc::database_error& e) {
-            cout << "getRankedProjects error: " << e.what() << "\n";
-        }
-        return results;
-    }
-
-    // ─────────────────────────────────────────
-    //  PROFESSOR SIDE: Ranked students for a project
-    // ─────────────────────────────────────────
-    vector<pair<int, int>> getRankedStudents(int PID, nanodbc::connection& conn) {
-        vector<pair<int, int>> results;  // {score, SID}
-        try {
-            // Get all students who applied to this project
-            string query =
-                "SELECT SID FROM Applications WHERE PID = ? AND Status = 'reviewing'";
-            auto stmt = nanodbc::statement(conn, query);
-            stmt.bind(0, &PID);
-            auto result = nanodbc::execute(stmt);
-            while (result.next()) {
-                int SID   = result.get<int>(0);
-                int score = calculateScore(SID, PID, conn);
-                results.push_back({score, SID});
-            }
-            // Sort descending by score
-            sort(results.begin(), results.end(),
-                [](auto& a, auto& b) { return a.first > b.first; });
-        }
-        catch (const nanodbc::database_error& e) {
-            cout << "getRankedStudents error: " << e.what() << "\n";
-        }
-        return results;
-    }
-
-    // ─────────────────────────────────────────
-    //  UPDATE ENGINE SCORE IN DATABASE
-    // ─────────────────────────────────────────
-    void updateEngineScore(int SID, int PID, int score, nanodbc::connection& conn) {
-        try {
-            string query =
-                "UPDATE Applications SET EngineScore = ? WHERE SID = ? AND PID = ?";
-            auto stmt = nanodbc::statement(conn, query);
-            stmt.bind(0, &score);
-            stmt.bind(1, &SID);
-            stmt.bind(2, &PID);
-            nanodbc::execute(stmt);
-        }
-        catch (const nanodbc::database_error& e) {
-            cout << "updateEngineScore error: " << e.what() << "\n";
-        }
-    }
-};
-
-// ─────────────────────────────────────────
-//  CONNECTION HELPER
-// ─────────────────────────────────────────
-nanodbc::connection getConnection() {
-    return nanodbc::connection(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        "SERVER=scholarsync.database.windows.net;"
-        "DATABASE=ScholarSync;"
-        "UID=scholarsync;"
-        "PWD=YOUR_PASSWORD_HERE;"
-        "Encrypt=yes;"
-        "Connection Timeout=30");
+    // Electrical Engineering
+    categoryMap["embedded system designing"] = "EE";
+    categoryMap["circuit design"]            = "EE";
+    categoryMap["fpga"]                      = "EE";
+    categoryMap["microcontrollers"]          = "EE";
+    categoryMap["signal processing"]         = "EE";
+    categoryMap["power systems"]             = "EE";
+    categoryMap["faraday"]                   = "EE";
+    categoryMap["electromagnetic"]           = "EE";
+    categoryMap["induction"]                 = "EE";
 }
 
 // ─────────────────────────────────────────
-//  MAIN — test both directions
+//  Normalize — lowercase + expand abbreviations
 // ─────────────────────────────────────────
-int main() {
-    try {
-        auto conn = getConnection();
-        MatchingEngine engine;
+QString MatchingEngine::normalize(const QString &skill)
+{
+    QString s = skill.trimmed().toLower();
+    if (synonymMap.contains(s))
+        return synonymMap[s];
+    return s;
+}
 
-        cout << "===== ScholarSync Matching Engine =====\n\n";
+// ─────────────────────────────────────────
+//  Semantic score between two skills
+// ─────────────────────────────────────────
+float MatchingEngine::semanticScore(const QString &a, const QString &b)
+{
+    QString na = normalize(a);
+    QString nb = normalize(b);
 
-        // ── STUDENT SIDE: Rahul (SID=1) sees ranked projects ──
-        cout << "---- Projects ranked for Student SID=1 (Rahul) ----\n";
-        auto rankedProjects = engine.getRankedProjects(1, conn);
-        if (rankedProjects.empty()) {
-            cout << "No matching projects found.\n";
-        } else {
-            for (auto& [score, PID] : rankedProjects) {
-                // Fetch project name
-                string q = "SELECT ProjectName FROM ProjectDetails WHERE PID = ?";
-                auto s = nanodbc::statement(conn, q);
-                s.bind(0, &PID);
-                auto r = nanodbc::execute(s);
-                string projectName = r.next() ? r.get<string>(0) : "Unknown";
+    // Layer 1: exact match
+    if (na == nb) return 1.0f;
 
-                cout << "Score: " << score << "/10"
-                     << " | Project: " << projectName
-                     << " (PID: " << PID << ")\n";
+    // Layer 2: same category
+    if (categoryMap.contains(na) && categoryMap.contains(nb))
+        if (categoryMap[na] == categoryMap[nb])
+            return 0.70f;
 
-                // Update score in Applications table
-                engine.updateEngineScore(1, PID, score, conn);
-            }
-        }
+    // Layer 3: fuzzy match using Qt's built-in string comparison
+    // Check if one contains the other
+    if (na.contains(nb) || nb.contains(na))
+        return 0.60f;
 
-        cout << "\n";
+    // Check character similarity (simple ratio)
+    int longer  = qMax(na.length(), nb.length());
+    if (longer == 0) return 1.0f;
 
-        // ── PROFESSOR SIDE: Project 1 ranked applicants ──
-        cout << "---- Applicants ranked for Project PID=1 ----\n";
-        auto rankedStudents = engine.getRankedStudents(1, conn);
-        if (rankedStudents.empty()) {
-            cout << "No applicants found.\n";
-        } else {
-            for (auto& [score, SID] : rankedStudents) {
-                // Fetch student name
-                string q = "SELECT Name FROM StudentDetails WHERE SID = ?";
-                auto s = nanodbc::statement(conn, q);
-                s.bind(0, &SID);
-                auto r = nanodbc::execute(s);
-                string studentName = r.next() ? r.get<string>(0) : "Unknown";
+    // Count matching characters
+    int matches = 0;
+    QString shorter = na.length() < nb.length() ? na : nb;
+    QString longerStr = na.length() >= nb.length() ? na : nb;
+    for (QChar c : shorter)
+        if (longerStr.contains(c)) matches++;
 
-                cout << "Score: " << score << "/10"
-                     << " | Student: " << studentName
-                     << " (SID: " << SID << ")\n";
-            }
-        }
+    float ratio = (float)matches / longer;
+    if (ratio >= 0.8f) return ratio;
 
+    return 0.0f;
+}
+
+// ─────────────────────────────────────────
+//  Proficiency factor
+// ─────────────────────────────────────────
+float MatchingEngine::proficiencyFactor(int studentProf, int requiredProf)
+{
+    if (requiredProf == 0) return 1.0f;
+    if (studentProf >= requiredProf) return 1.0f;
+    return (float)studentProf / (float)requiredProf;
+}
+
+// ─────────────────────────────────────────
+//  Calculate score: one student vs one project
+// ─────────────────────────────────────────
+int MatchingEngine::calculateScore(int SID, int PID, QSqlDatabase &db)
+{
+    // Fetch student skills
+    QVector<QPair<QString,int>> studentSkills;
+    QSqlQuery skillQ(db);
+    skillQ.prepare("SELECT SkillName, Proficiency FROM SkillList WHERE SID = ?");
+    skillQ.addBindValue(SID);
+    if (skillQ.exec()) {
+        while (skillQ.next())
+            studentSkills.append({skillQ.value(0).toString(), skillQ.value(1).toInt()});
     }
-    catch (const nanodbc::database_error& e) {
-        cout << "Connection error: " << e.what() << "\n";
-        cout << "Native: " << e.native() << "\n";
-        if (e.native() == 258)
-            cout << "Azure sleeping, try again.\n";
+
+    // Fetch project requirements
+    QVector<QPair<QString,int>> requirements;
+    QSqlQuery reqQ(db);
+    reqQ.prepare(
+        "SELECT skillName, requiredProficiency FROM skillRequirement WHERE PID = ?");
+    reqQ.addBindValue(PID);
+    if (reqQ.exec()) {
+        while (reqQ.next())
+            requirements.append({reqQ.value(0).toString(), reqQ.value(1).toInt()});
     }
 
-    return 0;
+    // Fetch student interests
+    QSqlQuery intQ(db);
+    intQ.prepare("SELECT Preference FROM StudentDetails WHERE SID = ?");
+    intQ.addBindValue(SID);
+    QString studentInterest = "";
+    if (intQ.exec() && intQ.next())
+        studentInterest = intQ.value(0).toString();
+
+    // Fetch project preference
+    QSqlQuery prefQ(db);
+    prefQ.prepare("SELECT preference FROM ProjectDetails WHERE PID = ?");
+    prefQ.addBindValue(PID);
+    QString projectPref = "";
+    if (prefQ.exec() && prefQ.next())
+        projectPref = prefQ.value(0).toString();
+
+    if (requirements.isEmpty()) return 0;
+
+    // Calculate skill score (70% weight)
+    float totalSkillScore = 0.0f;
+    for (auto &[reqSkill, reqProf] : requirements) {
+        float bestContribution = 0.0f;
+        for (auto &[stuSkill, stuProf] : studentSkills) {
+            float semantic = semanticScore(stuSkill, reqSkill);
+            float profFactor = proficiencyFactor(stuProf, reqProf);
+            float contribution = semantic * profFactor;
+            if (contribution > bestContribution)
+                bestContribution = contribution;
+        }
+        totalSkillScore += bestContribution;
+    }
+    float avgSkillScore = totalSkillScore / requirements.size();
+
+    // Calculate interest score (30% weight)
+    float interestScore = 0.0f;
+    if (!studentInterest.isEmpty() && !projectPref.isEmpty())
+        interestScore = semanticScore(studentInterest, projectPref);
+
+    // Combine
+    float raw   = (avgSkillScore * 0.7f) + (interestScore * 0.3f);
+    int   final = qMax(1, (int)ceil(raw * 10));
+    return qMin(final, 10);
+}
+
+// ─────────────────────────────────────────
+//  Get ranked projects for a student
+// ─────────────────────────────────────────
+QVector<QPair<int,int>> MatchingEngine::getRankedProjects(int SID, QSqlDatabase &db)
+{
+    QVector<QPair<int,int>> results;
+
+    QSqlQuery q(db);
+    q.exec("SELECT PID FROM ProjectDetails WHERE status = 'Active' AND vacantSpot > 0");
+    while (q.next()) {
+        int PID   = q.value(0).toInt();
+        int score = calculateScore(SID, PID, db);
+        if (score > 0)
+            results.append({score, PID});
+    }
+
+    // Sort descending by score
+    std::sort(results.begin(), results.end(),
+        [](auto &a, auto &b){ return a.first > b.first; });
+
+    return results;
+}
+
+// ─────────────────────────────────────────
+//  Get ranked students for a project
+// ─────────────────────────────────────────
+QVector<QPair<int,int>> MatchingEngine::getRankedStudents(int PID, QSqlDatabase &db)
+{
+    QVector<QPair<int,int>> results;
+
+    QSqlQuery q(db);
+    q.prepare(
+        "SELECT SID FROM Applications WHERE PID = ? AND Status = 'reviewing'");
+    q.addBindValue(PID);
+    if (q.exec()) {
+        while (q.next()) {
+            int SID   = q.value(0).toInt();
+            int score = calculateScore(SID, PID, db);
+            results.append({score, SID});
+        }
+    }
+
+    std::sort(results.begin(), results.end(),
+        [](auto &a, auto &b){ return a.first > b.first; });
+
+    return results;
+}
+
+// ─────────────────────────────────────────
+//  Update engine score in Applications
+// ─────────────────────────────────────────
+void MatchingEngine::updateEngineScore(int SID, int PID, int score, QSqlDatabase &db)
+{
+    QSqlQuery q(db);
+    q.prepare(
+        "UPDATE Applications SET EngineScore = ? WHERE SID = ? AND PID = ?");
+    q.addBindValue(score);
+    q.addBindValue(SID);
+    q.addBindValue(PID);
+    q.exec();
 }

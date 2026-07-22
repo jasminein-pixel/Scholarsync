@@ -48,6 +48,8 @@ set(PROJECT_SOURCES
     fileupload.cpp
     forgotpassword.h
     forgotpassword.cpp
+    MatchingEngine.h
+    MatchingEngine.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})

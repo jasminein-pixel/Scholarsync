@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QIntValidator>
+#include "../MatchingEngine.h"
 
 // ── Pull in session globals from mainwindow.h ──
 extern int currentSID;
@@ -1447,106 +1448,86 @@ void StudentDashboard::uploadCV()
 
 void StudentDashboard::loadRecommendations()
 {
-    recommendTable->setUpdatesEnabled(false);
     recommendTable->setRowCount(0);
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected())
-        db.connect();
+    if (!db.isConnected()) db.connect();
 
-    auto skillQ = db.prepareAndExecute(
-        "SELECT SkillName FROM SkillList WHERE SID = ?", {currentSID});
-    QStringList studentSkills;
-    while (skillQ.next())
-        studentSkills << skillQ.value(0).toString().toLower();
+    QSqlDatabase database = db.database();
 
-    auto projQ = db.executeQuery(
-        "SELECT PID, ProjectName, department FROM ProjectDetails "
-        "WHERE status = 'Active' AND vacantSpot > 0");
+    // Use matching engine
+    MatchingEngine engine;
+    auto ranked = engine.getRankedProjects(currentSID, database);
 
-    QVector<QPair<int, QString>> scored;
-    QVector<QStringList> rows;
+    for (auto &[score, pid] : ranked) {
+        // Fetch project details
+        QSqlQuery q(database);
+        q.prepare(
+            "SELECT ProjectName, department FROM ProjectDetails WHERE PID = ?");
+        q.addBindValue(pid);
+        if (!q.exec() || !q.next()) continue;
 
-    while (projQ.next())
-    {
-        int pid = projQ.value(0).toInt();
-        QString name = projQ.value(1).toString();
-        QString dept = projQ.value(2).toString();
-
-        auto reqQ = db.prepareAndExecute(
-            "SELECT skillName FROM skillRequirement WHERE PID = ?", {pid});
-        int matches = 0, total = 0;
-        while (reqQ.next())
-        {
-            total++;
-            QString req = reqQ.value(0).toString().toLower();
-            if (studentSkills.contains(req))
-                matches++;
-        }
-
-        int score = total > 0 ? (matches * 100 / total) : 0;
-        scored.append({score, name});
-        rows.append({name, dept, QString::number(score) + "%", QString::number(pid)});
-    }
-
-    QVector<int> indices(rows.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [&](int a, int b)
-              { return scored[a].first > scored[b].first; });
-
-    for (int i : indices)
-    {
         int row = recommendTable->rowCount();
         recommendTable->insertRow(row);
-        recommendTable->setItem(row, 0, new QTableWidgetItem(rows[i][0]));
-        recommendTable->setItem(row, 1, new QTableWidgetItem(rows[i][1]));
+        recommendTable->setItem(row, 0, new QTableWidgetItem(q.value(0).toString()));
+        recommendTable->setItem(row, 1, new QTableWidgetItem(q.value(1).toString()));
 
-        auto *scoreItem = new QTableWidgetItem(rows[i][2]);
+        // Score with color
+        QString scoreText = QString::number(score) + "/10";
+        auto *scoreItem = new QTableWidgetItem(scoreText);
         scoreItem->setTextAlignment(Qt::AlignCenter);
-        int score = scored[i].first;
-        if (score >= 70)
-            scoreItem->setForeground(QColor("#16a34a"));
-        else if (score >= 40)
-            scoreItem->setForeground(QColor("#d97706"));
-        else
-            scoreItem->setForeground(QColor("#dc2626"));
+        if (score >= 7)      scoreItem->setForeground(QColor("#16a34a"));
+        else if (score >= 4) scoreItem->setForeground(QColor("#d97706"));
+        else                 scoreItem->setForeground(QColor("#dc2626"));
         recommendTable->setItem(row, 2, scoreItem);
 
-        int pid = rows[i][3].toInt();
+        // Apply button
         auto *applyBtn = new QPushButton("Apply");
-        applyBtn->setObjectName("rowPrimaryBtn"); // styled via tableStyle(), no per-row setStyleSheet
+        applyBtn->setFixedWidth(80);
+        applyBtn->setStyleSheet(primaryBtnStyle());
         applyBtn->setCursor(Qt::PointingHandCursor);
-        connect(applyBtn, &QPushButton::clicked, this, [this, pid]
-                {
+        connect(applyBtn, &QPushButton::clicked, this, [this, pid, score]{
             auto &db = DatabaseManager::instance();
-            auto check = db.prepareAndExecute(
-                "SELECT COUNT(*) FROM Applications WHERE SID = ? AND PID = ?",
-                {currentSID, pid});
+            QSqlDatabase database = db.database();
+
+            // Check already applied
+            QSqlQuery check(database);
+            check.prepare(
+                "SELECT COUNT(*) FROM Applications WHERE SID = ? AND PID = ?");
+            check.addBindValue(currentSID);
+            check.addBindValue(pid);
+            check.exec();
             check.next();
             if (check.value(0).toInt() > 0) {
                 QMessageBox::information(this, "Already Applied",
-                                         "You have already applied to this project.");
+                    "You have already applied to this project.");
                 return;
             }
-            db.prepareAndExecute(
-                "INSERT INTO Applications (SID, PID, Status, EngineScore, message) "
-                "VALUES (?, ?, 'reviewing', 0, 'Application submitted via ScholarSync')",
-                {currentSID, pid});
+
+            // Insert application with engine score
+            QSqlQuery insert(database);
+            insert.prepare(
+                "INSERT INTO Applications "
+                "(SID, PID, Status, EngineScore, message) "
+                "VALUES (?, ?, 'reviewing', ?, "
+                "'Application submitted via ScholarSync')");
+            insert.addBindValue(currentSID);
+            insert.addBindValue(pid);
+            insert.addBindValue(score * 10); // convert 1-10 to 1-100
+            insert.exec();
+
             QMessageBox::information(this, "Applied!",
-                                     "Your application has been submitted."); });
+                "Application submitted successfully!");
+        });
         recommendTable->setCellWidget(row, 3, applyBtn);
     }
 
-    if (recommendTable->rowCount() == 0)
-    {
+    if (recommendTable->rowCount() == 0) {
         recommendTable->insertRow(0);
         auto *empty = new QTableWidgetItem(
             "No recommendations yet. Add skills to get matched!");
         empty->setForeground(QColor("#94a3b8"));
         recommendTable->setItem(0, 0, empty);
     }
-
-    adjustTableHeight(recommendTable, indices.size());
-    recommendTable->setUpdatesEnabled(true);
 }
 
 void StudentDashboard::loadInbox()

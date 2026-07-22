@@ -7,6 +7,8 @@
 #include <numeric>
 #include <algorithm>
 #include "../mainwindow.h"
+#include "../MatchingEngine.h"
+#include <algorithm>
 
 extern int currentTID;
 extern QString currentUserName;
@@ -680,59 +682,87 @@ void TeacherDashboard::loadApplicantsForProject(int pid, const QString &projectN
     applicantsTable->setRowCount(0);
 
     auto &db = DatabaseManager::instance();
-    if (!db.isConnected())
-        db.connect();
+    if (!db.isConnected()) db.connect();
+    QSqlDatabase database = db.database();
 
     // Get vacant spot
-    auto vsQuery = db.prepareAndExecute(
-        "SELECT vacantSpot FROM ProjectDetails WHERE PID = ?", {pid});
+    QSqlQuery vsQuery(database);
+    vsQuery.prepare("SELECT vacantSpot FROM ProjectDetails WHERE PID = ?");
+    vsQuery.addBindValue(pid);
+    vsQuery.exec();
     currentVacantSpot = vsQuery.next() ? vsQuery.value(0).toString() : "0";
 
     // Get applicants
-    auto q = db.prepareAndExecute(
+    QSqlQuery q(database);
+    q.prepare(
         "SELECT a.AID, a.SID, a.Status, a.EngineScore, a.message, "
         "s.Name, s.Program, s.Semester, s.cv_url "
         "FROM Applications a "
         "JOIN StudentDetails s ON a.SID = s.SID "
-        "WHERE a.PID = ?",
-        {pid});
+        "WHERE a.PID = ?");
+    q.addBindValue(pid);
+    if (!q.exec()) {
+        qDebug() << "loadApplicants error:" << q.lastError().text();
+        return;
+    }
 
-    int row = 0;
-    while (q.next())
-    {
+    // Calculate scores for all applicants first then sort
+    struct Applicant {
+        QString aid, sid, status, message, name, program, sem, cvUrl;
+        int realScore;
+    };
+    QVector<Applicant> applicants;
+
+    MatchingEngine engine;
+
+    while (q.next()) {
+        Applicant a;
+        a.aid     = q.value(0).toString();
+        a.sid     = q.value(1).toString();
+        a.status  = q.value(2).toString();
+        a.message = q.value(4).toString();
+        a.name    = q.value(5).toString();
+        a.program = q.value(6).toString();
+        a.sem     = q.value(7).toString();
+        a.cvUrl   = q.value(8).toString();
+
+        // Calculate real match score
+        a.realScore = engine.calculateScore(a.sid.toInt(), pid, database);
+
+        // Update score in DB
+        engine.updateEngineScore(a.sid.toInt(), pid, a.realScore * 10, database);
+
+        applicants.append(a);
+    }
+
+    // Sort by score descending
+    std::sort(applicants.begin(), applicants.end(),
+        [](const Applicant &a, const Applicant &b){
+            return a.realScore > b.realScore;
+        });
+
+    // Populate table
+    for (int row = 0; row < applicants.size(); row++) {
+        const Applicant &a = applicants[row];
         applicantsTable->insertRow(row);
 
-        QString aid = q.value(0).toString();
-        QString sid = q.value(1).toString();
-        QString status = q.value(2).toString();
-        QString score = q.value(3).toString();
-        QString message = q.value(4).toString();
-        QString name = q.value(5).toString();
-        QString program = q.value(6).toString();
-        QString sem = q.value(7).toString();
-        QString cvUrl = q.value(8).toString();
-
-        applicantsTable->setItem(row, 0, new QTableWidgetItem(name));
-        applicantsTable->setItem(row, 1, new QTableWidgetItem(program));
-        applicantsTable->setItem(row, 2, new QTableWidgetItem(sem));
+        applicantsTable->setItem(row, 0, new QTableWidgetItem(a.name));
+        applicantsTable->setItem(row, 1, new QTableWidgetItem(a.program));
+        applicantsTable->setItem(row, 2, new QTableWidgetItem(a.sem));
 
         // Score with color
-        auto *scoreItem = new QTableWidgetItem(score + "/100");
+        auto *scoreItem = new QTableWidgetItem(
+            QString::number(a.realScore) + "/10");
         scoreItem->setTextAlignment(Qt::AlignCenter);
-        int scoreInt = score.toInt();
-        if (scoreInt >= 70)
-            scoreItem->setForeground(QColor("#16a34a"));
-        else if (scoreInt >= 40)
-            scoreItem->setForeground(QColor("#d97706"));
-        else
-            scoreItem->setForeground(QColor("#dc2626"));
+        if (a.realScore >= 7)      scoreItem->setForeground(QColor("#16a34a"));
+        else if (a.realScore >= 4) scoreItem->setForeground(QColor("#d97706"));
+        else                       scoreItem->setForeground(QColor("#dc2626"));
         applicantsTable->setItem(row, 3, scoreItem);
 
-        applicantsTable->setItem(row, 4, new QTableWidgetItem(message));
+        applicantsTable->setItem(row, 4, new QTableWidgetItem(a.message));
 
         // CV button
-        if (!cvUrl.isEmpty() && cvUrl != "0")
-        {
+        if (!a.cvUrl.isEmpty() && a.cvUrl != "0") {
             auto *cvBtn = new QPushButton("View CV");
             cvBtn->setStyleSheet(R"(
                 QPushButton {
@@ -743,18 +773,17 @@ void TeacherDashboard::loadApplicantsForProject(int pid, const QString &projectN
                 QPushButton:hover { background: #e2e8f0; }
             )");
             cvBtn->setCursor(Qt::PointingHandCursor);
-            connect(cvBtn, &QPushButton::clicked, this, [cvUrl]
-                    { QDesktopServices::openUrl(QUrl(cvUrl)); });
+            QString url = a.cvUrl;
+            connect(cvBtn, &QPushButton::clicked, this, [url]{
+                QDesktopServices::openUrl(QUrl(url));
+            });
             applicantsTable->setCellWidget(row, 5, cvBtn);
-        }
-        else
-        {
+        } else {
             applicantsTable->setItem(row, 5, new QTableWidgetItem("No CV"));
         }
 
-        // Action buttons — only show if still reviewing
-        if (status.toLower() == "reviewing")
-        {
+        // Action buttons
+        if (a.status.toLower() == "reviewing") {
             auto *actionWidget = new QWidget();
             auto *actionLayout = new QHBoxLayout(actionWidget);
             actionLayout->setContentsMargins(4, 2, 4, 2);
@@ -768,38 +797,32 @@ void TeacherDashboard::loadApplicantsForProject(int pid, const QString &projectN
             rejectBtn->setStyleSheet(dangerBtnStyle());
             rejectBtn->setCursor(Qt::PointingHandCursor);
 
+            QString aid = a.aid;
+            QString pidStr = QString::number(pid);
             connect(approveBtn, &QPushButton::clicked, this,
-                    [this, aid, pid, row]
-                    {
-                        approveApplicant(aid, currentVacantSpot, QString::number(pid), row);
-                    });
+                [this, aid, pidStr, row]{
+                    approveApplicant(aid, currentVacantSpot, pidStr, row);
+                });
             connect(rejectBtn, &QPushButton::clicked, this,
-                    [this, aid, row]
-                    {
-                        rejectApplicant(aid, row);
-                    });
+                [this, aid, row]{
+                    rejectApplicant(aid, row);
+                });
 
             actionLayout->addWidget(approveBtn);
             actionLayout->addWidget(rejectBtn);
             applicantsTable->setCellWidget(row, 6, actionWidget);
-        }
-        else
-        {
-            // Show status badge
-            auto *statusItem = new QTableWidgetItem(status.toUpper());
+        } else {
+            auto *statusItem = new QTableWidgetItem(a.status.toUpper());
             statusItem->setTextAlignment(Qt::AlignCenter);
-            if (status.toLower() == "approved")
+            if (a.status.toLower() == "approved")
                 statusItem->setForeground(QColor("#16a34a"));
             else
                 statusItem->setForeground(QColor("#dc2626"));
             applicantsTable->setItem(row, 6, statusItem);
         }
-
-        row++;
     }
 
-    if (row == 0)
-    {
+    if (applicants.isEmpty()) {
         applicantsTable->insertRow(0);
         auto *empty = new QTableWidgetItem("No applicants yet for this project.");
         empty->setForeground(QColor("#94a3b8"));
