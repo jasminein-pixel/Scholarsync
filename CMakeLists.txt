@@ -16,12 +16,16 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.cpp
     mainwindow.ui
-    student_login.h
-    student_login.cpp
-    student_login.ui
-    teacher_login.h
-    teacher_login.cpp
-    teacher_login.ui
+
+    views/student_login.h
+    views/student_login.cpp
+    views/student_login.ui
+    views/teacher_login.h
+    views/teacher_login.cpp
+    views/teacher_login.ui
+    views/forgotpassword.h
+    views/forgotpassword.cpp
+
     database/DatabaseManager.h
     database/DatabaseManager.cpp
     auth/AuthManager.h
@@ -30,26 +34,38 @@ set(PROJECT_SOURCES
     models/Student.cpp
     models/Teacher.h
     models/Teacher.cpp
+
+    services/notification.h
+    services/notification.cpp
+    services/fileupload.h
+    services/fileupload.cpp
+    services/modification.h
+    services/modification.cpp
+    services/MatchingEngine.h
+    services/MatchingEngine.cpp
+
     windows/RegisterWindow.h
     windows/RegisterWindow.cpp
-    windows/StudentDashboard.h
-    windows/StudentDashboard.cpp
-    windows/TeacherDashboard.h
-    windows/TeacherDashboard.cpp
-    application.h
-    application.cpp
-    applicationManager.h
-    applicationManager.cpp
-    modification.h
-    modification.cpp
-    notification.h
-    notification.cpp
-    fileupload.h
-    fileupload.cpp
-    forgotpassword.h
-    forgotpassword.cpp
-    MatchingEngine.h
-    MatchingEngine.cpp
+
+    windows/student/StudentDashboard.h
+    windows/student/StudentDashboard.cpp
+    windows/student/StudentStyles.h
+    windows/student/PieChartWidget.h
+    windows/student/PieChartWidget.cpp
+    windows/student/StudentSkillsScreen.cpp
+    windows/student/StudentInterestsScreen.cpp
+    windows/student/StudentBrowseScreen.cpp
+    windows/student/StudentCVScreen.cpp
+    windows/student/StudentRecommendScreen.cpp
+    windows/student/StudentInboxScreen.cpp
+    windows/student/StudentProfileScreen.cpp
+
+    windows/teacher/TeacherDashboard.h
+    windows/teacher/TeacherDashboard.cpp
+    windows/teacher/TeacherStyles.h
+    windows/teacher/TeacherProjectsScreen.cpp
+    windows/teacher/TeacherPostScreen.cpp
+    windows/teacher/TeacherApplicantsScreen.cpp
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})

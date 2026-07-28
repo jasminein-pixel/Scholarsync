@@ -1,13 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "student_login.h"
-#include "teacher_login.h"
+#include "views/student_login.h"
+#include "views/teacher_login.h"
+#include "views/forgotpassword.h"
 #include "windows/RegisterWindow.h"
 #include "auth/AuthManager.h"
-#include "forgotpassword.h"
 #include "database/DatabaseManager.h"
-#include "windows/StudentDashboard.h"
-#include "windows/TeacherDashboard.h"
+#include "windows/student/StudentDashboard.h"
+#include "windows/teacher/TeacherDashboard.h"
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,13 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_forgotPasswordPage = new ForgotPasswordPage(this);
 
     ui->stackedWidget->addWidget(m_studentLoginPage);
-
     ui->stackedWidget->addWidget(m_teacherLoginPage);
     ui->stackedWidget->addWidget(m_forgotPasswordPage);
 
     ui->stackedWidget->setCurrentIndex(PageRoleSelect);
 
-    // Connect to database on startup
     DatabaseManager::instance().connect();
 
     setupConnections();
@@ -39,30 +37,26 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupConnections()
 {
-    // Role selection
     connect(ui->btnStudentRole, &QPushButton::clicked,
             this, &MainWindow::onStudentRoleSelected);
     connect(ui->btnTeacherRole, &QPushButton::clicked,
             this, &MainWindow::onTeacherRoleSelected);
 
-    // Back buttons
     connect(m_studentLoginPage, &StudentLogin::backRequested,
             this, &MainWindow::onBackToRoleSelect);
     connect(m_teacherLoginPage, &TeacherLogin::backRequested,
             this, &MainWindow::onBackToRoleSelect);
 
-    // Login attempts
     connect(m_studentLoginPage, &StudentLogin::loginAttempted,
             this, &MainWindow::handleStudentLoginAttempt);
     connect(m_teacherLoginPage, &TeacherLogin::loginAttempted,
             this, &MainWindow::handleTeacherLoginAttempt);
 
-    // Register buttons
     connect(m_studentLoginPage, &StudentLogin::registerRequested,
             this, &MainWindow::onStudentRegisterRequested);
     connect(m_teacherLoginPage, &TeacherLogin::registerRequested,
             this, &MainWindow::onTeacherRegisterRequested);
-    // Forgot password
+
     connect(m_studentLoginPage, &StudentLogin::forgotPasswordRequested,
             this, &MainWindow::onForgotPasswordRequested);
     connect(m_teacherLoginPage, &TeacherLogin::forgotPasswordRequested,
@@ -109,7 +103,6 @@ void MainWindow::handleStudentLoginAttempt(const QString &email, const QString &
 
     if (AuthManager::loginStudent(email, password))
     {
-        // Fetch SID and name for session
         auto q = DatabaseManager::instance().prepareAndExecute(
             "SELECT SID, Name FROM StudentDetails WHERE Email = ?",
             {email});
@@ -142,7 +135,6 @@ void MainWindow::handleTeacherLoginAttempt(const QString &email, const QString &
 
     if (AuthManager::loginTeacher(email, password))
     {
-        // Fetch TID and name for session
         auto q = DatabaseManager::instance().prepareAndExecute(
             "SELECT TID, Name FROM TeacherDetails WHERE Email = ?",
             {email});

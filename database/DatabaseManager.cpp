@@ -26,7 +26,7 @@ bool DatabaseManager::connect()
     }
     QString connStr =
         "DRIVER={ODBC Driver 18 for SQL Server};"
-        "SERVER=scholarsync.database.windows.net,1433;"
+        "SERVER=scholarsync.database.windows.net;"
         "DATABASE=ScholarSync;"
         "UID=scholarsync;"
         "PWD=secretpassword123#;"
