@@ -16,10 +16,6 @@ ScholarSync/
 │   ├── Teacher.cpp
 │   └── Teacher.h
 │
-├── nanodbc/
-│
-├── rapidfuzz-cpp/
-│
 ├── services/
 │   ├── fileupload.cpp
 │   ├── fileupload.h
