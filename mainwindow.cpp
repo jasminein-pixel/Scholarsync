@@ -9,11 +9,22 @@
 #include "windows/student/StudentDashboard.h"
 #include "windows/teacher/TeacherDashboard.h"
 #include <QMessageBox>
+#include <QPixmap>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    QPixmap logo(":/scholarsync_logo.png");
+    ui->logoLabel->setPixmap(
+        logo.scaled(300, 120, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+    );
+    ui->logoLabel->setAlignment(Qt::AlignCenter);
+    ui->logoLabel->setText("");
+    ui->appNameLabel->hide();
+    ui->taglineLabel->hide();
+
 
     m_studentLoginPage = new StudentLogin(this);
     m_teacherLoginPage = new TeacherLogin(this);

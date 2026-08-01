@@ -66,6 +66,8 @@ set(PROJECT_SOURCES
     windows/teacher/TeacherProjectsScreen.cpp
     windows/teacher/TeacherPostScreen.cpp
     windows/teacher/TeacherApplicantsScreen.cpp
+
+    resources/resources.qrc
 )
 
 add_executable(ScholarSync ${PROJECT_SOURCES})
