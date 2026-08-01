@@ -26,6 +26,8 @@
 #include <QDebug>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QVector>
+#include <QPair>
 
 class PieChartWidget;
 
@@ -126,4 +128,9 @@ private:
     void activateBtn(QPushButton *btn);
     void openProfile();
     QPushButton *activeBtn = nullptr;
+    
+
+// ── Recommendation caching ──
+QVector<QPair<int,int>> cachedRecommendations;
+bool recommendationsLoaded = false;
 };

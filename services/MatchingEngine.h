@@ -35,4 +35,6 @@ private:
     QString normalize(const QString &skill);
     float semanticScore(const QString &a, const QString &b);
     float proficiencyFactor(int studentProf, int requiredProf);
+    QVector<QPair<int,int>> cachedRecommendations;
+    bool recommendationsLoaded = false;
 };
