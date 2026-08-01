@@ -1,18 +1,80 @@
-# Scholarsync
-1st year 2nd semester's end semester project..
-# Research Collaboration Platform
+# ScholarSync Project Structure
 
-A bidirectional research matching platform built with C++ (OOP) and Qt GUI.
-Connects professors and students based on skills and research interests.
-
-## What it does
-- Professors can post research projects with required skills
-- Students can browse and apply to projects matching their interests
-- A matching engine suggests relevant projects to students
-- Both professors and students can view applicants and manage selections
-
-## Tech Stack
-- Language: C++
-- GUI: Qt (Qt Widgets)
-- Version Control: Git / GitHub
+```text
+ScholarSync/
+├── auth/
+│   ├── AuthManager.cpp
+│   └── AuthManager.h
+│
+├── database/
+│   ├── DatabaseManager.cpp
+│   └── DatabaseManager.h
+│
+├── models/
+│   ├── Student.cpp
+│   ├── Student.h
+│   ├── Teacher.cpp
+│   └── Teacher.h
+│
+├── services/
+│   ├── fileupload.cpp
+│   ├── fileupload.h
+│   ├── MatchingEngine.cpp
+│   ├── MatchingEngine.h
+│   ├── modification.cpp
+│   ├── modification.h
+│   ├── notification.cpp
+│   └── notification.h
+│
+├── unused/
+│   ├── application.cpp
+│   ├── application.h
+│   ├── applicationManager.cpp
+│   ├── applicationManager.h
+│   └── connect.cpp
+│
+├── views/
+│   ├── forgotpassword.cpp
+│   ├── forgotpassword.h
+│   ├── student_login.cpp
+│   ├── student_login.h
+│   ├── student_login.ui
+│   ├── teacher_login.cpp
+│   ├── teacher_login.h
+│   └── teacher_login.ui
+│
+├── windows/
+│   ├── student/
+│   │   ├── PieChartWidget.cpp
+│   │   ├── PieChartWidget.h
+│   │   ├── StudentBrowseScreen.cpp
+│   │   ├── StudentCVScreen.cpp
+│   │   ├── StudentDashboard.cpp
+│   │   ├── StudentDashboard.h
+│   │   ├── StudentInboxScreen.cpp
+│   │   ├── StudentInterestsScreen.cpp
+│   │   ├── StudentProfileScreen.cpp
+│   │   ├── StudentRecommendScreen.cpp
+│   │   ├── StudentSkillsScreen.cpp
+│   │   └── StudentStyles.h
+│   │
+│   ├── teacher/
+│   │   ├── TeacherApplicantsScreen.cpp
+│   │   ├── TeacherDashboard.cpp
+│   │   ├── TeacherDashboard.h
+│   │   ├── TeacherPostScreen.cpp
+│   │   ├── TeacherProjectsScreen.cpp
+│   │   └── TeacherStyles.h
+│   │
+│   ├── RegisterWindow.cpp
+│   └── RegisterWindow.h
+│
+├── .gitignore
+├── CMakeLists.txt
+├── main.cpp
+├── mainwindow.cpp
+├── mainwindow.h
+├── mainwindow.ui
+└── README.md
+```
 
