@@ -4,9 +4,9 @@
 #include <QDebug>
 #include <cmath>
 
-// ─────────────────────────────────────────
+
 //  Constructor — load synonym + category maps
-// ─────────────────────────────────────────
+
 MatchingEngine::MatchingEngine()
 {
     // SYNONYM MAP — abbreviations to full form
@@ -28,8 +28,8 @@ MatchingEngine::MatchingEngine()
     synonymMap["devops"] = "development operations";
     synonymMap["ce"]     = "computer engineering";
 
-    // CATEGORY MAP — related skills → same domain
-    // AI/ML
+    // CATEGORY MAP — related skills, same domain
+   //AI, ML
     categoryMap["machine learning"]             = "AI";
     categoryMap["artificial intelligence"]      = "AI";
     categoryMap["deep learning"]                = "AI";
@@ -111,9 +111,9 @@ MatchingEngine::MatchingEngine()
     categoryMap["induction"]                 = "EE";
 }
 
-// ─────────────────────────────────────────
+
 //  Normalize — lowercase + expand abbreviations
-// ─────────────────────────────────────────
+
 QString MatchingEngine::normalize(const QString &skill)
 {
     QString s = skill.trimmed().toLower();
@@ -122,27 +122,27 @@ QString MatchingEngine::normalize(const QString &skill)
     return s;
 }
 
-// ─────────────────────────────────────────
+
 //  Semantic score between two skills
-// ─────────────────────────────────────────
+
 float MatchingEngine::semanticScore(const QString &a, const QString &b)
 {
     QString na = normalize(a);
     QString nb = normalize(b);
 
-    // Layer 1: exact match
+    //Exact match
     if (na == nb) return 1.0f;
 
-    // Layer 2: same category
+    //Same category
     if (categoryMap.contains(na) && categoryMap.contains(nb))
         if (categoryMap[na] == categoryMap[nb])
             return 0.70f;
 
-    // Layer 3: fuzzy — substring check
+    //Substring check
     if (na.contains(nb) || nb.contains(na))
         return 0.60f;
 
-    // Layer 4: character similarity ratio
+    //Character similarity ratio
     int longer = qMax(na.length(), nb.length());
     if (longer == 0) return 1.0f;
 
@@ -158,9 +158,9 @@ float MatchingEngine::semanticScore(const QString &a, const QString &b)
     return 0.0f;
 }
 
-// ─────────────────────────────────────────
+
 //  Proficiency factor
-// ─────────────────────────────────────────
+
 float MatchingEngine::proficiencyFactor(int studentProf, int requiredProf)
 {
     if (requiredProf == 0) return 1.0f;
@@ -168,77 +168,117 @@ float MatchingEngine::proficiencyFactor(int studentProf, int requiredProf)
     return (float)studentProf / (float)requiredProf;
 }
 
-// ─────────────────────────────────────────
+
 //  Calculate score: one student vs one project
-// ─────────────────────────────────────────
+
 int MatchingEngine::calculateScore(int SID, int PID, QSqlDatabase &db)
 {
-    // Fetch student skills
+    //  Fetch student skills ──
     QVector<QPair<QString,int>> studentSkills;
     QSqlQuery skillQ(db);
-    skillQ.prepare("SELECT SkillName, Proficiency FROM SkillList WHERE SID = ?");
+    skillQ.prepare(
+        "SELECT SkillName, Proficiency FROM SkillList WHERE SID = ?");
     skillQ.addBindValue(SID);
     if (skillQ.exec()) {
         while (skillQ.next())
-            studentSkills.append({skillQ.value(0).toString(), skillQ.value(1).toInt()});
+            studentSkills.append({skillQ.value(0).toString(),
+                                  skillQ.value(1).toInt()});
     }
 
-    // Fetch project requirements
+    //Fetch project requirements ──
     QVector<QPair<QString,int>> requirements;
     QSqlQuery reqQ(db);
-    reqQ.prepare("SELECT skillName, requiredProficiency FROM skillRequirement WHERE PID = ?");
+    reqQ.prepare(
+        "SELECT skillName, requiredProficiency "
+        "FROM skillRequirement WHERE PID = ?");
     reqQ.addBindValue(PID);
     if (reqQ.exec()) {
         while (reqQ.next())
-            requirements.append({reqQ.value(0).toString(), reqQ.value(1).toInt()});
+            requirements.append({reqQ.value(0).toString(),
+                                 reqQ.value(1).toInt()});
     }
 
-    // Fetch student preference
-    QSqlQuery intQ(db);
-    intQ.prepare("SELECT Preference FROM StudentDetails WHERE SID = ?");
-    intQ.addBindValue(SID);
-    QString studentInterest;
-    if (intQ.exec() && intQ.next())
-        studentInterest = intQ.value(0).toString();
+    //Fetch student interests
+    QStringList studentInterests;
+    QSqlQuery interestQ(db);
+    interestQ.prepare("SELECT Interest FROM Interest WHERE SID = ?");
+    interestQ.addBindValue(SID);
+    interestQ.exec();
+    while (interestQ.next())
+        studentInterests.append(interestQ.value(0).toString().trimmed());
 
-    // Fetch project preference
+    //Fetch student preference
+    QString studentPreference = "";
+    QSqlQuery prefStudentQ(db);
+    prefStudentQ.prepare(
+        "SELECT Preference FROM StudentDetails WHERE SID = ?");
+    prefStudentQ.addBindValue(SID);
+    prefStudentQ.exec();
+    if (prefStudentQ.next())
+        studentPreference = prefStudentQ.value(0).toString().trimmed();
+
+    //Fetch project preference and department
+    QString projectPref = "";
+    QString projectDept = "";
     QSqlQuery prefQ(db);
-    prefQ.prepare("SELECT preference FROM ProjectDetails WHERE PID = ?");
+    prefQ.prepare(
+        "SELECT preference, department FROM ProjectDetails WHERE PID = ?");
     prefQ.addBindValue(PID);
-    QString projectPref;
-    if (prefQ.exec() && prefQ.next())
+    if (prefQ.exec() && prefQ.next()) {
         projectPref = prefQ.value(0).toString();
+        projectDept = prefQ.value(1).toString();
+    }
 
+    //Early exit if no requirements
     if (requirements.isEmpty()) return 0;
 
-    // Skill score (70% weight)
+    //Skill score (70%)
     float totalSkillScore = 0.0f;
     for (auto &[reqSkill, reqProf] : requirements) {
         float bestContribution = 0.0f;
         for (auto &[stuSkill, stuProf] : studentSkills) {
-            float semantic    = semanticScore(stuSkill, reqSkill);
-            float profFactor  = proficiencyFactor(stuProf, reqProf);
-            float contribution = semantic * profFactor;
-            if (contribution > bestContribution)
-                bestContribution = contribution;
+            float semantic = semanticScore(stuSkill, reqSkill);
+            float profFac  = proficiencyFactor(stuProf, reqProf);
+            float contrib  = semantic * profFac;
+            if (contrib > bestContribution)
+                bestContribution = contrib;
         }
         totalSkillScore += bestContribution;
     }
     float avgSkillScore = totalSkillScore / requirements.size();
 
-    // Interest score (30% weight)
+    //Interest score (20%)
     float interestScore = 0.0f;
-    if (!studentInterest.isEmpty() && !projectPref.isEmpty())
-        interestScore = semanticScore(studentInterest, projectPref);
+    if (!studentInterests.isEmpty() && !requirements.isEmpty()) {
+        float totalInterestScore = 0.0f;
+        for (auto &interest : studentInterests) {
+            float bestForThisInterest = 0.0f;
+            for (auto &[reqSkill, reqProf] : requirements) {
+                float s = semanticScore(interest, reqSkill);
+                if (s > bestForThisInterest)
+                    bestForThisInterest = s;
+            }
+            totalInterestScore += bestForThisInterest;
+        }
+        interestScore = totalInterestScore / studentInterests.size();
+    }
 
-    float raw   = (avgSkillScore * 0.7f) + (interestScore * 0.3f);
+    //Preference score (10%)
+    float preferenceScore = 0.0f;
+    if (!studentPreference.isEmpty() && !projectPref.isEmpty())
+        preferenceScore = semanticScore(studentPreference, projectPref);
+
+    //Combine and scale to 1-10
+    float combinedInterestScore = (interestScore   * 0.20f) +
+                                  (preferenceScore * 0.10f);
+    float raw   = (avgSkillScore * 0.7f) + combinedInterestScore;
     int   final = qMax(1, (int)ceil(raw * 10));
     return qMin(final, 10);
 }
 
-// ─────────────────────────────────────────
+
 //  Get ranked projects for a student
-// ─────────────────────────────────────────
+
 QVector<QPair<int,int>> MatchingEngine::getRankedProjects(int SID, QSqlDatabase &db)
 {
     QVector<QPair<int,int>> results;
@@ -258,9 +298,9 @@ QVector<QPair<int,int>> MatchingEngine::getRankedProjects(int SID, QSqlDatabase 
     return results;
 }
 
-// ─────────────────────────────────────────
+
 //  Get ranked students for a project
-// ─────────────────────────────────────────
+
 QVector<QPair<int,int>> MatchingEngine::getRankedStudents(int PID, QSqlDatabase &db)
 {
     QVector<QPair<int,int>> results;
@@ -282,9 +322,9 @@ QVector<QPair<int,int>> MatchingEngine::getRankedStudents(int PID, QSqlDatabase 
     return results;
 }
 
-// ─────────────────────────────────────────
+
 //  Update engine score in Applications
-// ─────────────────────────────────────────
+
 void MatchingEngine::updateEngineScore(int SID, int PID, int score, QSqlDatabase &db)
 {
     QSqlQuery q(db);
